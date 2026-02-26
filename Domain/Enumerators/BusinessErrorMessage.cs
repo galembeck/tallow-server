@@ -1,0 +1,81 @@
+﻿using Domain.Utils;
+
+namespace Domain.Enumerators;
+
+public enum BusinessErrorMessage
+{
+    [EnumDescription("USER_NOT_FOUND")]
+    USER_NOT_FOUND = 1,
+
+    [EnumDescription("INVALID_PASSWORD")]
+    INVALID_PASSWORD = 2,
+
+    [EnumDescription("NOT_FOUND")]
+    NOT_FOUND = 3,
+
+    [EnumDescription("INVALID_PAGE")]
+    INVALID_PAGE = 4,
+
+    [EnumDescription("INVALID_PARAMETER")]
+    INVALID_PARAMETER = 5,
+
+    [EnumDescription("DOCUMENT_ALREADY_USED")]
+    DOCUMENT_ALREADY_USED = 6,
+
+    [EnumDescription("NAME_ALREADY_USED")]
+    NAME_ALREADY_USED = 7,
+
+    [EnumDescription("INSTALLATION_NOT_BELONG_THIS_USER")]
+    INSTALLATION_NOT_BELONG_THIS_USER = 8,
+
+    [EnumDescription("INSTALLATION_ALREADY_EXISTS")]
+    INSTALLATION_ALREADY_EXISTS = 9,
+
+    [EnumDescription("FILE_ALREADY_EXISTS")]
+    FILE_ALREADY_EXISTS = 10,
+
+    [EnumDescription("FILE_NOT_FOUND")]
+    FILE_NOT_FOUND = 11,
+
+    [EnumDescription("SOMETHING_WENT_WRONG")]
+    SOMETHING_WENT_WRONG = 12,
+
+    [EnumDescription("INSTALLATION_NOT_FOUND")]
+    INSTALLATION_NOT_FOUND = 13,
+
+    [EnumDescription("RECOVERY_INVALID_TOKEN")]
+    RECOVERY_INVALID_TOKEN = 14,
+
+    [EnumDescription("USER_NOT_FOUND_OR_INVALID_PASSWORD")]
+    USER_NOT_FOUND_OR_INVALID_PASSWORD = 15,
+
+    [EnumDescription("EXPIRED_SIGN_TOKEN")]
+    EXPIRED_SIGN_TOKEN = 16,
+
+    [EnumDescription("INVALID_STEP")]
+    INVALID_STEP = 17,
+
+    [EnumDescription("INVALID_TOKEN")]
+    INVALID_TOKEN = 18,
+
+    [EnumDescription("INVALID_DOCUMENT_OR_RECOVERY_PASSWORD_TOKEN")]
+    INVALID_DOCUMENT_OR_RECOVERY_PASSWORD_TOKEN = 18,
+
+    [EnumDescription("USER_WITH_REPEAT_REGISTRATION_EMAIL")]
+    USER_WITH_REPEAT_REGISTRATION_EMAIL = 19,
+
+    [EnumDescription("USER_WITH_REPEAT_REGISTRATION_PHONE")]
+    USER_WITH_REPEAT_REGISTRATION_PHONE = 20,
+
+    [EnumDescription("USER_WITH_REPEAT_REGISTRATION_EMAIL_AND_PHONE")]
+    USER_WITH_REPEAT_REGISTRATION_EMAIL_AND_PHONE = 21,
+
+    [EnumDescription("INVALID_DDD_NUMBER")]
+    INVALID_DDD_NUMBER = 22,
+
+    [EnumDescription("SOME_VALUE_IS_MISSING")]
+    SOME_VALUE_IS_MISSING = 23,
+
+    [EnumDescription("ENUM_ERROR")]
+    ENUM_ERROR = 24
+}
