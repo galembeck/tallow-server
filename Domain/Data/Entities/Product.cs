@@ -10,12 +10,22 @@ public class Product : BaseEntity, IBaseEntity<Product>
 {
     public string Name { get; set; }
     public string Description { get; set; }
+
     public ProductCategory Category { get; set; }
+
 
     [Column(TypeName = "decimal(18,2)")]
     public decimal Price { get; set; }
+
     public List<string> Ingredients { get; set; }
+
     public int StockAmount { get; set; }
+
+    public string ImageUrl { get; set; }
+    public string? ImagePath { get; set; }
+    public string? ImageFileName { get; set; }
+
+    public List<string>? AdditionalImagesUrls { get; set; }
 
 
 
@@ -34,6 +44,10 @@ public class Product : BaseEntity, IBaseEntity<Product>
             Price = entity.Price,
             Ingredients = entity.Ingredients,
             StockAmount = entity.StockAmount,
+            ImageUrl = entity.ImageUrl,
+            ImagePath = entity.ImagePath,
+            ImageFileName = entity.ImageFileName,
+            AdditionalImagesUrls = entity.AdditionalImagesUrls
         };
 
         newEntity.InitializeInstance(entity);

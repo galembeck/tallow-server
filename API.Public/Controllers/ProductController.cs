@@ -18,23 +18,27 @@ public class ProductController(IProductService productService) : _BaseController
     [HttpPost]
     [AuthAttribute]
     [AuthorizeAttribute(ProfileType.ADMIN)]
-    public async Task<IActionResult> CreateProduct([FromBody] CreateProductDTO body)
+    public async Task<IActionResult> CreateProduct([FromForm] CreateProductDTO body)
     {
         try
         {
             var actorId = Authenticated?.User?.Id;
 
-            await new ProductCreationValidator().ValidateAndThrowAsync(body);
-
             var product = CreateProductDTO.DTOToModel(body);
-            var productSaved = await _productService.CreateAsync(product, actorId);
+            var productSaved = await _productService.CreateWithImageAsync(
+                    product,
+                    body.Image,
+                    body.AdditionalImages,
+                    actorId
+                );
 
             var response = ProductResponseDTO.ModelToDTO(productSaved);
 
             response.CreatedBy = Authenticated?.User?.Name;
 
             return Ok(response);
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             StatusCode(StatusCodes.Status500InternalServerError, e.Message);
 

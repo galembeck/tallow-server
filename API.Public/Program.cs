@@ -55,6 +55,8 @@ builder.Services.ConfigureCustomServices(builder.Configuration);
         {
             options.AddServerHeader = false;
 
+            options.Limits.MaxRequestBodySize = 5 * 1024 * 1024; // 5MB
+
             if (!Debugger.IsAttached)
             {
                 options.Listen(IPAddress.IPv6Any, 80);

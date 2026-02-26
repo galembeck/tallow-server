@@ -8,10 +8,17 @@ public class ProductResponseDTO : PublicBaseDTO<Product>
 {
     public string Name { get; set; }
     public string Description { get; set; }
+
     public ProductCategory Category { get; set; }
+
     public decimal Price { get; set; }
+
     public List<string> Ingredients { get; set; }
+
     public int StockAmount { get; set; }
+
+    public string ImageUrl { get; set; }
+    public List<string>? AdditionalImagesUrls { get; set; }
 
     public DateTimeOffset? CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
@@ -24,12 +31,15 @@ public class ProductResponseDTO : PublicBaseDTO<Product>
     {
         if (o == null) return;
 
+        Id = o.Id;
         Name = o.Name;
         Description = o.Description;
         Category = o.Category;
         Price = o.Price;
         Ingredients = o.Ingredients;
         StockAmount = o.StockAmount;
+        ImageUrl = o.ImageUrl;
+        AdditionalImagesUrls = o.AdditionalImagesUrls;
         CreatedAt = o.CreatedAt;
         CreatedBy = o.CreatedBy;
     }

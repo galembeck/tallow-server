@@ -29,6 +29,8 @@ public static class NativeInjector
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IProductService, ProductService>();
 
+        services.AddScoped<IFileStorageService, FileStorageService>();
+
         #endregion .: INTERNAL INJECTIONS :.
     }
 }
