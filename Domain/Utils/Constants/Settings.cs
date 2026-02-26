@@ -2,6 +2,8 @@
 
 public sealed record Settings
 {
+    public string BaseUrl { get; set; }
+
     public string Version { get; init; } = string.Empty;
     public string Environment { get; init; } = string.Empty;
     public string Domain { get; init; } = string.Empty;
