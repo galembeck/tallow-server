@@ -1,4 +1,5 @@
 ﻿using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace API.Public.Configuration;
 
@@ -14,7 +15,12 @@ public static class ControllersInitializer
 
         services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
 
-
+        services.Configure<FormOptions>(options =>
+        {
+            options.MultipartBodyLengthLimit = 5 * 1024 * 1024; // 5MB
+            options.ValueLengthLimit = int.MaxValue;
+            options.MultipartHeadersLengthLimit = int.MaxValue;
+        });
 
         services.AddRouting(options =>
         {

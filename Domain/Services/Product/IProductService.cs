@@ -2,6 +2,7 @@
 using Domain.Repository;
 using Domain.SearchParameters;
 using Domain.Services._Base;
+using Microsoft.AspNetCore.Http;
 
 namespace Domain.Services;
 
@@ -11,4 +12,5 @@ public abstract class IProductService : IService<Product, IProductRepository, Pr
     public IProductService(IProductRepository repository) : base(repository) { }
 
     public abstract Task<Product> CreateAsync(Product product, string? actorId = null);
+    public abstract Task<Product> CreateWithImageAsync(Product product, IFormFile image, List<IFormFile> additonalImages, string? actorId = null);
 }
