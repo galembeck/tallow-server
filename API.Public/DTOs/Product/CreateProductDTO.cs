@@ -17,6 +17,11 @@ public class CreateProductDTO : PublicBaseDTO<ProductEntity>
 
     public int StockAmount { get; set; }
 
+    public float Weight { get; set; }
+    public float Height { get; set; }
+    public float Width { get; set; }
+    public float Length { get; set; }
+
     public IFormFile Image { get; set; }
     public List<IFormFile>? AdditionalImages { get; set; }
 
@@ -34,6 +39,10 @@ public class CreateProductDTO : PublicBaseDTO<ProductEntity>
         Price = o.Price;
         Ingredients = o.Ingredients;
         StockAmount = o.StockAmount;
+        Weight = o.Weight;
+        Height = o.Height;
+        Width = o.Width;
+        Length = o.Length;
     }
 
     public static CreateProductDTO ModelToDTO(ProductEntity o) => o == null ? null : new CreateProductDTO(o);
@@ -52,6 +61,10 @@ public class CreateProductDTO : PublicBaseDTO<ProductEntity>
             Price = o.Price,
             Ingredients = o.Ingredients,
             StockAmount = o.StockAmount,
+            Weight = o.Weight,
+            Height = o.Height,
+            Width = o.Width,
+            Length = o.Length
         };
 
         return o.InitializeInstance(model);

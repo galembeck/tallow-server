@@ -21,6 +21,11 @@ public class Product : BaseEntity, IBaseEntity<Product>
 
     public int StockAmount { get; set; }
 
+    public float Weight { get; set; }
+    public float Height { get; set; }
+    public float Width { get; set; }
+    public float Length { get; set; }
+
     public string ImageUrl { get; set; }
     public string? ImagePath { get; set; }
     public string? ImageFileName { get; set; }
@@ -44,6 +49,10 @@ public class Product : BaseEntity, IBaseEntity<Product>
             Price = entity.Price,
             Ingredients = entity.Ingredients,
             StockAmount = entity.StockAmount,
+            Weight = entity.Weight,
+            Height = entity.Height,
+            Width = entity.Width,
+            Length = entity.Length,
             ImageUrl = entity.ImageUrl,
             ImagePath = entity.ImagePath,
             ImageFileName = entity.ImageFileName,

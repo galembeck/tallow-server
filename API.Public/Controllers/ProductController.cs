@@ -53,4 +53,12 @@ public class ProductController(IProductService productService) : _BaseController
 
         return Ok(ProductResponseDTO.ModelToDTO(response));
     }
+
+    [HttpGet("{productId}")]
+    public async Task<IActionResult> GetProductById(string productId, CancellationToken cancellationToken = default)
+    {
+        var response = await _productService.GetByIdAsync(productId);
+
+        return Ok(ProductResponseDTO.ModelToDTO(response));
+    }
 }
