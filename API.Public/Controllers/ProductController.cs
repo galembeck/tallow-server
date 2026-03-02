@@ -3,6 +3,7 @@ using API.Public.DTOs;
 using API.Public.Filters;
 using API.Public.Validators;
 using Domain.Enumerators;
+using Domain.SearchParameters;
 using Domain.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -52,6 +53,38 @@ public class ProductController(IProductService productService) : _BaseController
         var response = await _productService.GetAllAsync();
 
         return Ok(ProductResponseDTO.ModelToDTO(response));
+    }
+
+    [HttpGet("filter")]
+    public async Task<IActionResult> GetProductsByFilter(
+        [FromQuery] ProductCategory? category,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice,
+        [FromQuery] string? searchTerm,
+        [FromQuery] bool? inStock,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var searchParameter = new ProductSearchParameter
+            {
+                Category = category,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                SearchTerm = searchTerm,
+                InStock = inStock
+            };
+
+            var products = await _productService.GetProductsByCategoryAsync(searchParameter, cancellationToken);
+
+            return Ok(ProductResponseDTO.ModelToDTO(products));
+        }
+        catch (Exception e)
+        {
+            StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+
+            throw;
+        }
     }
 
     [HttpGet("{productId}")]

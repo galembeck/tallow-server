@@ -31,6 +31,8 @@ public static class NativeInjector
 
         services.AddScoped<IFileStorageService, FileStorageService>();
 
+        services.AddScoped<IShippingService, ShippingService>();
+
         #endregion .: INTERNAL INJECTIONS :.
     }
 }

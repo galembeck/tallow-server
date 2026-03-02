@@ -1,5 +1,6 @@
 ﻿using Domain.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using Repository.Configurations;
 
 namespace Repository;
 

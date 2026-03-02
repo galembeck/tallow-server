@@ -17,6 +17,11 @@ public class ProductResponseDTO : PublicBaseDTO<Product>
 
     public int StockAmount { get; set; }
 
+    public float Weight { get; set; }
+    public float Height { get; set; }
+    public float Width { get; set; }
+    public float Length { get; set; }
+
     public string ImageUrl { get; set; }
     public List<string>? AdditionalImagesUrls { get; set; }
 
@@ -38,6 +43,10 @@ public class ProductResponseDTO : PublicBaseDTO<Product>
         Price = o.Price;
         Ingredients = o.Ingredients;
         StockAmount = o.StockAmount;
+        Weight = o.Weight;
+        Height = o.Height;
+        Width = o.Width;
+        Length = o.Length;
         ImageUrl = o.ImageUrl;
         AdditionalImagesUrls = o.AdditionalImagesUrls;
         CreatedAt = o.CreatedAt;

@@ -2,7 +2,9 @@
 using Domain.Enumerators;
 using Domain.Exceptions;
 using Domain.Repository;
+using Domain.SearchParameters;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace Domain.Services;
 
@@ -58,12 +60,55 @@ public class ProductService(
                 product.AdditionalImagesUrls = additionalUrls;
             }
 
-            var productSaved = await _Repository.InsertAsync(product.WithoutRelations(product));
+            var productSaved = await _Repository.InsertAsync(product.WithoutRelations(product), actorId);
 
-            return productSaved;
+            var productFromDb = await _Repository.GetAsync(productSaved.Id);
+
+            return productFromDb;
         } catch (Exception e)
         {
             throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+        }
+    }
+
+    public override async Task<List<Product>> GetProductsByCategoryAsync(ProductSearchParameter searchParameter, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var query = _Repository.GetByExpression(p => true);
+
+            if (searchParameter.Category.HasValue)
+            {
+                query = query.Where(p => p.Category == searchParameter.Category.Value);
+            }
+
+            if (searchParameter.MinPrice.HasValue)
+            {
+                query = query.Where(p => p.Price >= searchParameter.MinPrice.Value);
+            }
+
+            if (searchParameter.MaxPrice.HasValue)
+            {
+                query = query.Where(p => p.Price <= searchParameter.MaxPrice.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchParameter.SearchTerm))
+            {
+                var searchTerm = searchParameter.SearchTerm.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(searchTerm)
+                                      || p.Description.ToLower().Contains(searchTerm));
+            }
+
+            if (searchParameter.InStock.HasValue && searchParameter.InStock.Value)
+            {
+                query = query.Where(p => p.StockAmount > 0);
+            }
+
+            return await query.ToListAsync(cancellationToken);
+        }
+        catch (Exception)
+        {
+            throw;
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using API.Public.Configuration;
 using AspNetCoreRateLimit;
+using Domain.Constants;
 using IoC;
 
 namespace API.Public.Extensions;
@@ -15,7 +16,10 @@ public static class ServiceCollectionExtensions
         services.ConfigureJwt();
         //services.ConfigureLogger(configuration);
         services.AddCoreMemoryCache(configuration);
+
         services.AddHttpContextAccessor();
+        services.AddHttpClient(Constant.Settings.ShippingServiceSettings.ShippingServiceName);
+
         services.ConfigureInjections();
         services.AddAuthorization();
         services.AddResponseCompression();
