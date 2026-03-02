@@ -14,6 +14,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AccessToken> AccessTokens { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<Product> Products { get; set; }
+    public DbSet<Cart> Carts { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
 
 
     #endregion ENTITIES
