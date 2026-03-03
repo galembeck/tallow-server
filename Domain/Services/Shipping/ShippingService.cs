@@ -110,11 +110,99 @@ public class ShippingService : IShippingService
         }
     }
 
-    public async Task<ShippingQuoteResponse> CalculateCheapestShippingAsync(ShippingQuoteRequest request, CancellationToken cancellationToken = default)
+    public async Task<ShippingQuoteResponse> CalculateFastestShippingAsync(ShippingQuoteRequest request, CancellationToken cancellationToken = default)
     {
         var quotes = await CalculateShippingAsync(request, cancellationToken);
 
-        return quotes.OrderBy(x => x.DeliveryPrice).FirstOrDefault()
+        return quotes.OrderBy(x => x.DeliveryTime).FirstOrDefault()
+            ?? throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+    }
+
+    public async Task<List<ShippingQuoteResponse>> CalculateCartShippingAsync(CartShippingQuoteRequest request, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var totalInsuranceValue = request.Products.Sum(p => p.DeclaredValue);
+
+            var superFreteRequest = new SuperFreteRequest
+            {
+                From = new FromAddress
+                {
+                    PostalCode = _fromZipCode.Replace("-", "").Replace(".", "").Trim()
+                },
+
+                To = new ToAddress
+                {
+                    PostalCode = request.ToZipCode.Replace("-", "").Replace(".", "").Trim()
+                },
+
+                Services = "1,2,17,3,31",
+
+                Options = new ShippingOptions
+                {
+                    OwnHand = false,
+                    Receipt = false,
+                    InsuranceValue = totalInsuranceValue,
+                    UseInsuranceValue = totalInsuranceValue > 0
+                },
+
+                Products = request.Products.Select(p => new ProductInfo
+                {
+                    Quantity = p.Quantity > 0 ? p.Quantity : 1,
+                    Weight = p.Weight,
+                    Height = p.Height,
+                    Width = p.Width,
+                    Length = p.Length
+                }).ToList()
+            };
+
+            var jsonContent = JsonSerializer.Serialize(superFreteRequest, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+            });
+
+            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync("api/v0/calculator", content, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            var superFreteResponses = JsonSerializer.Deserialize<List<SuperFreteResponse>>(responseContent, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            return superFreteResponses?.Select(sf => new ShippingQuoteResponse
+            {
+                CarrierName = sf.Company?.Name ?? string.Empty,
+                CarrierCode = sf.Company?.Id.ToString() ?? string.Empty,
+                ServiceName = sf.Name,
+                ServiceCode = sf.Id.ToString(),
+                DeliveryPrice = ParseDecimalFromString(sf.Price),
+                DeliveryTime = sf.DeliveryTime,
+                Error = sf.Error
+            }).Where(x => string.IsNullOrEmpty(x.Error)).ToList() ?? new List<ShippingQuoteResponse>();
+        }
+        catch (HttpRequestException)
+        {
+            throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
+    public async Task<ShippingQuoteResponse> CalculateFastestCartShippingAsync(CartShippingQuoteRequest request, CancellationToken cancellationToken = default)
+    {
+        var quotes = await CalculateCartShippingAsync(request, cancellationToken);
+
+        return quotes.OrderBy(x => x.DeliveryTime).FirstOrDefault()
             ?? throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
     }
 

@@ -2,6 +2,7 @@
 using API.Public.DTOs;
 using API.Public.DTOs.Shipping;
 using Domain.Constants;
+using Domain.Data.Models;
 using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -47,9 +48,9 @@ public class ShippingController(
         }
     }
 
-    [HttpPost("calculate/cheapest")]
+    [HttpPost("calculate/fastest")]
     [AllowAnonymous]
-    public async Task<IActionResult> CalculateCheapestShipping([FromBody] ShippingQuoteRequestDTO body, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> CalculateFastestShipping([FromBody] ShippingQuoteRequestDTO body, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -65,7 +66,85 @@ public class ShippingController(
                 Constant.Settings.ShippingServiceSettings.ShippingPostalCode
             );
 
-            var cheapestQuote = await _shippingService.CalculateCheapestShippingAsync(shippingRequest, cancellationToken);
+            var cheapestQuote = await _shippingService.CalculateFastestShippingAsync(shippingRequest, cancellationToken);
+
+            return Ok(ShippingQuoteResponseDTO.ModelToDTO(cheapestQuote));
+        }
+        catch (Exception e)
+        {
+            StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            throw;
+        }
+    }
+
+    [HttpPost("calculate/cart")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CalculateCartShipping([FromBody] CartShippingQuoteRequestDTO body, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var cartRequest = new CartShippingQuoteRequest
+            {
+                FromZipCode = Constant.Settings.ShippingServiceSettings.ShippingPostalCode,
+                ToZipCode = body.ToZipCode.Replace("-", "").Replace(".", "").Trim(),
+                Products = new List<CartProductItem>()
+            };
+
+            foreach (var item in body.Items)
+            {
+                var product = await _productService.GetByIdAsync(item.ProductId, cancellationToken);
+
+                cartRequest.Products.Add(new CartProductItem
+                {
+                    Quantity = item.Quantity > 0 ? item.Quantity : 1,
+                    Weight = product.Weight,
+                    Height = product.Height,
+                    Width = product.Width,
+                    Length = product.Length,
+                    DeclaredValue = product.Price
+                });
+            }
+
+            var quotes = await _shippingService.CalculateCartShippingAsync(cartRequest, cancellationToken);
+
+            return Ok(ShippingQuoteResponseDTO.ModelToDTO(quotes));
+        }
+        catch (Exception e)
+        {
+            StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+            throw;
+        }
+    }
+
+    [HttpPost("calculate/cart/fastest")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CalculateFastestCartShipping([FromBody] CartShippingQuoteRequestDTO body, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var cartRequest = new CartShippingQuoteRequest
+            {
+                FromZipCode = Constant.Settings.ShippingServiceSettings.ShippingPostalCode,
+                ToZipCode = body.ToZipCode.Replace("-", "").Replace(".", "").Trim(),
+                Products = new List<CartProductItem>()
+            };
+
+            foreach (var item in body.Items)
+            {
+                var product = await _productService.GetByIdAsync(item.ProductId, cancellationToken);
+
+                cartRequest.Products.Add(new CartProductItem
+                {
+                    Quantity = item.Quantity > 0 ? item.Quantity : 1,
+                    Weight = product.Weight,
+                    Height = product.Height,
+                    Width = product.Width,
+                    Length = product.Length,
+                    DeclaredValue = product.Price
+                });
+            }
+
+            var cheapestQuote = await _shippingService.CalculateFastestCartShippingAsync(cartRequest, cancellationToken);
 
             return Ok(ShippingQuoteResponseDTO.ModelToDTO(cheapestQuote));
         }
