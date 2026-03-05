@@ -77,5 +77,11 @@ public enum BusinessErrorMessage
     SOME_VALUE_IS_MISSING = 23,
 
     [EnumDescription("ENUM_ERROR")]
-    ENUM_ERROR = 24
+    ENUM_ERROR = 24,
+
+    [EnumDescription("ORDER_NOT_FOUND")]
+    ORDER_NOT_FOUND = 25,
+
+    [EnumDescription("CART_NOT_FOUND_OR_EMPTY")]
+    CART_NOT_FOUND_OR_EMPTY = 26,
 }

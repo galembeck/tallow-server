@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository;
 
@@ -11,9 +12,11 @@ using Repository;
 namespace Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260303212442_AddOrderAndPaymentTables")]
+    partial class AddOrderAndPaymentTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -145,19 +148,15 @@ namespace Repository.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BuyerCellphone")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BuyerDocument")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BuyerEmail")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("BuyerName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CancelledAt")
@@ -185,43 +184,32 @@ namespace Repository.Migrations
                     b.Property<DateTime?>("ShippedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ShippingAddress")
-                        .IsRequired()
+                    b.Property<string>("ShippingAddressCity")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShippingAddressComplement")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShippingAddressNeighborhood")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShippingAddressNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShippingAddressState")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShippingAddressStreet")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ShippingAddressZipcode")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("ShippingAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("ShippingCity")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ShippingComplement")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ShippingDeliveryTime")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ShippingNeighborhood")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ShippingNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ShippingService")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ShippingState")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ShippingZipcode")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
@@ -314,9 +302,6 @@ namespace Repository.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("AuthorizationCode")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("BoletoBarcode")
                         .HasColumnType("nvarchar(max)");
 
@@ -330,13 +315,7 @@ namespace Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CurrencyId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("DateApproved")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DateLastUpdated")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DateOfExpiration")
@@ -350,9 +329,6 @@ namespace Repository.Migrations
 
                     b.Property<int?>("Installments")
                         .HasColumnType("int");
-
-                    b.Property<bool?>("LiveMode")
-                        .HasColumnType("bit");
 
                     b.Property<long?>("MercadoPagoPaymentId")
                         .HasColumnType("bigint");
@@ -381,12 +357,6 @@ namespace Repository.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RawMercadoPagoResponse")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("ShippingAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("StatementDescriptor")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")

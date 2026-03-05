@@ -1,6 +1,7 @@
 ﻿using API.Public.Configuration;
 using AspNetCoreRateLimit;
 using Domain.Constants;
+using Domain.Services;
 using IoC;
 
 namespace API.Public.Extensions;
@@ -19,6 +20,8 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
         services.AddHttpClient(Constant.Settings.ShippingServiceSettings.ShippingServiceName);
+
+        services.AddHttpClient<IMercadoPagoService, MercadoPagoService>();
 
         services.ConfigureInjections();
         services.AddAuthorization();

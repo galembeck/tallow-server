@@ -15,6 +15,8 @@ public sealed record Settings
 
     public ShippingServiceSettings ShippingServiceSettings { get; set; } = new ShippingServiceSettings();
 
+    public PaymentServiceSettings PaymentServiceSettings { get; set; } = new PaymentServiceSettings();
+
     public string FintechPass { get; set; } = string.Empty;
     public string CriptBankKey { get; set; } = string.Empty;
 }

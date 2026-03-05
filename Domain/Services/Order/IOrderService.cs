@@ -1,0 +1,13 @@
+﻿using Domain.Data.Entities;
+using Domain.Data.Models;
+using Domain.Enumerators;
+
+namespace Domain.Services;
+
+public interface IOrderService
+{
+    Task<Order> CreateOrderFromCartAsync(string userId, string cartId, BuyerInfo buyerInfo, ShippingInfo shippingInfo, CancellationToken cancellationToken = default);
+    Task<Order?> GetOrderByIdAsync(string orderId, CancellationToken cancellationToken = default);
+    Task<List<Order>> GetUserOrdersAsync(string userId, CancellationToken cancellationToken = default);
+    Task<Order> UpdateOrderStatusAsync(string orderId, OrderStatus newStatus, CancellationToken cancellationToken = default);
+}

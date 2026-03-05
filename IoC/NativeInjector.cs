@@ -73,6 +73,22 @@ public static class NativeInjector
 
         #endregion .: CART :.
 
+        #region .: ORDER :.
+
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IOrderService, OrderService>();
+
+        #endregion .: ORDER :.
+
+        #region .: PAYMENT :.
+
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IPaymentService, PaymentService>();
+
+         services.AddScoped<IMercadoPagoService, MercadoPagoService>();
+
+        #endregion .: PAYMENT :.
+
         #endregion .: INTERNAL INJECTIONS :.
     }
 }

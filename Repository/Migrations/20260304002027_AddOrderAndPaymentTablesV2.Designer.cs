@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository;
 
@@ -11,9 +12,11 @@ using Repository;
 namespace Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260304002027_AddOrderAndPaymentTablesV2")]
+    partial class AddOrderAndPaymentTablesV2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -314,9 +317,6 @@ namespace Repository.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("AuthorizationCode")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("BoletoBarcode")
                         .HasColumnType("nvarchar(max)");
 
@@ -330,13 +330,7 @@ namespace Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("CurrencyId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime?>("DateApproved")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("DateLastUpdated")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("DateOfExpiration")
@@ -350,9 +344,6 @@ namespace Repository.Migrations
 
                     b.Property<int?>("Installments")
                         .HasColumnType("int");
-
-                    b.Property<bool?>("LiveMode")
-                        .HasColumnType("bit");
 
                     b.Property<long?>("MercadoPagoPaymentId")
                         .HasColumnType("bigint");
@@ -381,12 +372,6 @@ namespace Repository.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RawMercadoPagoResponse")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("ShippingAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("StatementDescriptor")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Status")
