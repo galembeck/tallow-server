@@ -5,7 +5,13 @@ using Domain.Utils;
 using Domain.Utils.Constants;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
+
+// Force invariant culture globally so decimal values sent with '.' (e.g. 19.9)
+// are never misread as thousands separators on pt-BR systems.
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 
 //---------- BUILDER ---------- //
 
