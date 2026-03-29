@@ -8,8 +8,8 @@ public enum PaymentMethod
     CREDIT_CARD = 1,
 
     [EnumDescription("PIX")]
-    PIX = 1,
+    PIX = 2,
 
     [EnumDescription("BOLETO")]
-    BOLETO = 1,
+    BOLETO = 3,
 }

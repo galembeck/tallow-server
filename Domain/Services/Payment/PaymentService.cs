@@ -55,7 +55,7 @@ public class PaymentService(
             PixCopyPaste = mpResponse.PointOfInteraction?.TransactionData?.QrCode,
 
             BoletoUrl = mpResponse.PointOfInteraction?.TransactionData?.TicketUrl,
-            BoletoBarcode = mpResponse.PointOfInteraction?.TransactionData?.QrCode,
+            BoletoBarcode = mpResponse.Barcode?.Content,
 
             RawMercadoPagoResponse = JsonSerializer.Serialize(mpResponse, new JsonSerializerOptions
             {

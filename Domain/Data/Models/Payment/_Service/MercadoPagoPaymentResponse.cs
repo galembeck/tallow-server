@@ -70,6 +70,9 @@ public class MercadoPagoPaymentResponse
 
     [JsonPropertyName("point_of_interaction")]
     public PointOfInteraction? PointOfInteraction { get; set; }
+
+    [JsonPropertyName("barcode")]
+    public BarcodeData? Barcode { get; set; }
 }
 
 public class PointOfInteraction
@@ -88,4 +91,10 @@ public class TransactionData
 
     [JsonPropertyName("ticket_url")]
     public string? TicketUrl { get; set; }
+}
+
+public class BarcodeData
+{
+    [JsonPropertyName("content")]
+    public string? Content { get; set; }
 }

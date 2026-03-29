@@ -56,7 +56,7 @@ public class MercadoPagoService : IMercadoPagoService
         long paymentId,
         CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient.GetAsync("/v0/payments/{paymentId}", cancellationToken);
+        var response = await _httpClient.GetAsync($"/v1/payments/{paymentId}", cancellationToken);
 
         var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
