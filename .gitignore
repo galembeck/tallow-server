@@ -364,3 +364,6 @@ FodyWeavers.xsd
 
 # Claude Code tooling
 .claude/
+
+# Local file uploads
+API.Public/wwwroot/uploads/

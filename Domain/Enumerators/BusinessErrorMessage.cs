@@ -79,9 +79,12 @@ public enum BusinessErrorMessage
     [EnumDescription("ENUM_ERROR")]
     ENUM_ERROR = 24,
 
+    [EnumDescription("PRODUCT_NOT_FOUND")]
+    PRODUCT_NOT_FOUND = 25,
+
     [EnumDescription("ORDER_NOT_FOUND")]
-    ORDER_NOT_FOUND = 25,
+    ORDER_NOT_FOUND = 26,
 
     [EnumDescription("CART_NOT_FOUND_OR_EMPTY")]
-    CART_NOT_FOUND_OR_EMPTY = 26,
+    CART_NOT_FOUND_OR_EMPTY = 27,
 }
