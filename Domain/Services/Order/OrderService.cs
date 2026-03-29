@@ -1,4 +1,5 @@
-﻿using Domain.Data.Entities;
+﻿using Domain.Constants;
+using Domain.Data.Entities;
 using Domain.Data.Models;
 using Domain.Enumerators;
 using Domain.Exceptions;
@@ -36,6 +37,11 @@ public class OrderService(
 
             Items = cart.Items.Select(cartItem => new OrderItem
             {
+                Id = Guid.NewGuid().ToString(),
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                CreatedBy = userId,
+                UpdatedBy = userId,
                 ProductId = cartItem.ProductId,
                 ProductName = cartItem.Product.Name,
                 ProductImageUrl = cartItem.Product.ImageUrl,
