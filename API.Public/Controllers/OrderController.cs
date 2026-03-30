@@ -1,6 +1,7 @@
 ﻿using API.Public.Controllers._Base;
 using API.Public.DTOs;
 using API.Public.Filters;
+using Domain.Enumerators;
 using Domain.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,47 @@ public class OrderController : _BaseController
     public OrderController(IOrderService orderService)
     {
         _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
+    }
+
+    [HttpGet("admin/all")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(List<OrderAdminSummaryDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAllOrders(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var orders = await _orderService.GetAllOrdersAsync(cancellationToken);
+            return Ok(OrderAdminSummaryDTO.ToDTO(orders));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpGet("admin/{id}")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(OrderResponseDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetOrderAdmin(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var order = await _orderService.GetOrderByIdAsync(id, cancellationToken);
+
+            if (order == null)
+                return NotFound();
+
+            return Ok(OrderResponseDTO.ToDTO(order));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
     }
 
     [HttpPost]

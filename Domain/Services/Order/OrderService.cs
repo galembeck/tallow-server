@@ -81,6 +81,11 @@ public class OrderService(
         return await _orderRepository.GetByUserIdAsync(userId, cancellationToken);
     }
 
+    public async Task<List<Order>> GetAllOrdersAsync(CancellationToken cancellationToken = default)
+    {
+        return await _orderRepository.GetAllWithRelationsAsync(cancellationToken);
+    }
+
     public async Task<Order> UpdateOrderStatusAsync(
         string orderId,
         OrderStatus newStatus,

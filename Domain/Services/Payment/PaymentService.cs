@@ -74,6 +74,11 @@ public class PaymentService(
         return await _paymentRepository.GetAsync(paymentId, cancellationToken);
     }
 
+    public async Task<Payment?> GetPaymentDetailAsync(string paymentId, CancellationToken cancellationToken = default)
+    {
+        return await _paymentRepository.GetByIdWithRelationsAsync(paymentId, cancellationToken);
+    }
+
     public async Task<List<Payment>> GetUserPaymentsAsync(string userId, CancellationToken cancellationToken = default)
     {
         return await _paymentRepository.GetByUserIdAsync(userId, cancellationToken);

@@ -10,6 +10,15 @@ public class PaymentRepository : BaseRepository<Payment>, IPaymentRepository
 {
     public PaymentRepository(AppDbContext context) : base(context, context.Payments) { }
 
+    public async Task<Payment?> GetByIdWithRelationsAsync(string paymentId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<Payment>()
+            .Include(p => p.User)
+            .Include(p => p.Order)
+                .ThenInclude(o => o.Items)
+            .FirstOrDefaultAsync(p => p.Id == paymentId && p.DeletedAt == null, cancellationToken);
+    }
+
     public async Task<Payment?> GetByMercadoPagoIdAsync(long mercadoPagoPaymentId, CancellationToken cancellationToken = default)
     {
         return await _context.Set<Payment>()

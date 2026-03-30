@@ -10,4 +10,5 @@ public interface IOrderRepository : IRepository<Order>
     Task<List<Order>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default);
     Task<List<Order>> GetByStatusAsync(OrderStatus status, CancellationToken cancellationToken = default);
     Task<Order?> GetByPaymentIdAsync(string paymentId, CancellationToken cancellationToken = default);
+    Task<List<Order>> GetAllWithRelationsAsync(CancellationToken cancellationToken = default);
 }

@@ -50,4 +50,14 @@ public class OrderRepository : BaseRepository<Order>, IOrderRepository
 
         return payment?.Order;
     }
+
+    public async Task<List<Order>> GetAllWithRelationsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<Order>()
+            .Include(o => o.User)
+            .Include(o => o.Items)
+            .Where(o => o.DeletedAt == null)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }

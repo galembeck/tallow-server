@@ -212,6 +212,29 @@ public class PaymentController : _BaseController
         }
     }
 
+    [HttpGet("admin/{id}")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(PaymentDetailDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetPaymentDetail(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var payment = await _paymentService.GetPaymentDetailAsync(id, cancellationToken);
+
+            if (payment == null)
+                return NotFound();
+
+            return Ok(PaymentDetailDTO.ToDTO(payment));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
     [HttpGet("admin/all")]
     [AuthAttribute]
     [AuthorizeAttribute(ProfileType.ADMIN)]
