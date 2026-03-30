@@ -2,7 +2,6 @@
 using Domain.Data.Entities;
 using Domain.Data.Models;
 using Domain.Enumerators;
-using Domain.Exceptions;
 using Domain.Repository;
 
 namespace Domain.Services;
@@ -91,24 +90,20 @@ public class OrderService(
         OrderStatus newStatus,
         CancellationToken cancellationToken = default)
     {
-        var order = await _orderRepository.GetAsync(orderId, cancellationToken);
+        return await _orderRepository.UpdatePartialAsync(
+            new Order { Id = orderId },
+            order =>
+            {
+                order.Status = newStatus;
 
-        if (order == null)
-            throw new PersistenceException($"Order with ID {orderId} not found");
-
-        order.Status = newStatus;
-
-        if (newStatus == OrderStatus.PAYMENT_APPROVED)
-            order.PaymentApprovedAt = DateTime.UtcNow;
-        else if (newStatus == OrderStatus.SHIPPED)
-            order.ShippedAt = DateTime.UtcNow;
-        else if (newStatus == OrderStatus.DELIVERED)
-            order.DeliveredAt = DateTime.UtcNow;
-        else if (newStatus == OrderStatus.CANCELLED)
-            order.CancelledAt = DateTime.UtcNow;
-
-        await _orderRepository.UpdateAsync(order);
-
-        return order;
+                if (newStatus == OrderStatus.PAYMENT_APPROVED)
+                    order.PaymentApprovedAt = DateTime.UtcNow;
+                else if (newStatus == OrderStatus.SHIPPED)
+                    order.ShippedAt = DateTime.UtcNow;
+                else if (newStatus == OrderStatus.DELIVERED)
+                    order.DeliveredAt = DateTime.UtcNow;
+                else if (newStatus == OrderStatus.CANCELLED)
+                    order.CancelledAt = DateTime.UtcNow;
+            });
     }
 }

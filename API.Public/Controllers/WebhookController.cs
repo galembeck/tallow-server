@@ -1,7 +1,6 @@
 ﻿using API.Public.Controllers._Base;
 using Domain.Data.Models;
 using Domain.Enumerators;
-using Domain.Repository;
 using Domain.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,16 +13,16 @@ namespace API.Public.Controllers;
 public class WebhookController : _BaseController
 {
     private readonly IPaymentService _paymentService;
-    private readonly IOrderRepository _orderRepository;
+    private readonly IOrderService _orderService;
     private readonly ILogger<WebhookController> _logger;
 
     public WebhookController(
         IPaymentService paymentService,
-        IOrderRepository orderRepository,
+        IOrderService orderService,
         ILogger<WebhookController> logger)
     {
         _paymentService = paymentService ?? throw new ArgumentNullException(nameof(paymentService));
-        _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+        _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -51,22 +50,13 @@ public class WebhookController : _BaseController
             // Atualizar status do pedido baseado no pagamento
             if (payment.OrderId != null)
             {
-                var order = await _orderRepository.GetAsync(payment.OrderId, cancellationToken);
-
-                if (order != null)
+                if (payment.Status == PaymentStatus.APPROVED)
                 {
-                    if (payment.Status == PaymentStatus.APPROVED)
-                    {
-                        order.Status = OrderStatus.PAYMENT_APPROVED;
-                        order.PaymentApprovedAt = DateTime.UtcNow;
-                    }
-                    else if (payment.Status == PaymentStatus.REJECTED || payment.Status == PaymentStatus.CANCELLED)
-                    {
-                        order.Status = OrderStatus.CANCELLED;
-                        order.CancelledAt = DateTime.UtcNow;
-                    }
-
-                    await _orderRepository.UpdateAsync(order);
+                    await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.PAYMENT_APPROVED, cancellationToken);
+                }
+                else if (payment.Status == PaymentStatus.REJECTED || payment.Status == PaymentStatus.CANCELLED)
+                {
+                    await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.CANCELLED, cancellationToken);
                 }
             }
 
