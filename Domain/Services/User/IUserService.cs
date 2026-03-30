@@ -21,7 +21,7 @@ public abstract class IUserService : IService<User, IUserRepository, UserSearchP
     public abstract Task<List<User>> GetUsersByEmail(string email, CancellationToken cancellationToken = default);
 
     // User self-update
-    public abstract Task<User> UpdateProfileAsync(string userId, string? name, string? email, string? document, string? password, bool? receiveEmailOffers, bool? receiveWhatsappOffers, IFormFile? avatar, CancellationToken cancellationToken = default);
+    public abstract Task<User> UpdateProfileAsync(string userId, string? name, string? email, string? cellphone, string? document, string? password, bool? receiveEmailOffers, bool? receiveWhatsappOffers, IFormFile? avatar, CancellationToken cancellationToken = default);
 
     // Admin management
     public abstract Task<List<User>> GetAllByProfileTypeAsync(ProfileType profileType, CancellationToken cancellationToken = default);

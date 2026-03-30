@@ -72,6 +72,7 @@ public class UserController(IUserService userService) : _BaseController
                 userId,
                 dto.Name,
                 dto.Email,
+                dto.Cellphone,
                 dto.Document,
                 dto.Password,
                 dto.ReceiveEmailOffers,
