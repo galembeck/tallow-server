@@ -1,4 +1,5 @@
 ﻿using UserEntity = Domain.Data.Entities.User;
+using Domain.Enumerators;
 using Domain.Exceptions;
 using Domain.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -482,5 +483,21 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
         }
 
         return response;
+    }
+
+    public async Task<List<UserEntity>> GetAllByProfileTypeAsync(ProfileType profileType, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await _entity
+                .Where(x => x.ProfileType == profileType && x.DeletedAt == null)
+                .OrderByDescending(x => x.CreatedAt)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+        }
+        catch (System.Exception e)
+        {
+            throw new PersistenceException(e);
+        }
     }
 }

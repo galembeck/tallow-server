@@ -153,6 +153,41 @@ public class UserService(
 
 
 
+    public override async Task<List<User>> GetAllByProfileTypeAsync(ProfileType profileType, CancellationToken cancellationToken = default)
+    {
+        return await _Repository.GetAllByProfileTypeAsync(profileType, cancellationToken);
+    }
+
+    public override async Task<User> GetUserDetailByAdminAsync(string id, CancellationToken cancellationToken = default)
+    {
+        var user = await _Repository.GetUserAsync(id, cancellationToken);
+
+        if (user is null)
+            throw new BusinessException(BusinessErrorMessage.USER_NOT_FOUND);
+
+        return user;
+    }
+
+    public override async Task<User> UpdateUserByAdminAsync(string id, string? name, string? email, CancellationToken cancellationToken = default)
+    {
+        return await _Repository.UpdatePartialAsync(
+            new User { Id = id },
+            user =>
+            {
+                if (!string.IsNullOrWhiteSpace(name))
+                    user.Name = name;
+                if (!string.IsNullOrWhiteSpace(email))
+                    user.Email = email;
+            });
+    }
+
+    public override async Task<User> ChangeUserProfileTypeAsync(string id, ProfileType newProfileType, CancellationToken cancellationToken = default)
+    {
+        return await _Repository.UpdatePartialAsync(
+            new User { Id = id },
+            user => user.ProfileType = newProfileType);
+    }
+
     #region .: HELPER METHODS :.
     private void CheckAndSanitizeCellphone(User user)
     {

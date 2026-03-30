@@ -47,4 +47,123 @@ public class UserController(IUserService userService) : _BaseController
 
         return Ok(PublicUserDTO.ModelToDTO(response));
     }
+
+    // ─── ADMIN: CLIENTS ──────────────────────────────────────────────────────
+
+    [HttpGet("admin/clients")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(List<UserAdminSummaryDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAllClients(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var users = await _userService.GetAllByProfileTypeAsync(ProfileType.CLIENT, cancellationToken);
+            return Ok(UserAdminSummaryDTO.ToDTO(users));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpGet("admin/clients/{id}")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(PublicUserDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetClientDetail(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var user = await _userService.GetUserDetailByAdminAsync(id, cancellationToken);
+            return Ok(PublicUserDTO.ModelToDTO(user));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpPut("admin/clients/{id}")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(PublicUserDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateClient(string id, [FromBody] UpdateUserAdminDTO dto, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(dto.Name) && string.IsNullOrWhiteSpace(dto.Email))
+                return StatusCode(StatusCodes.Status400BadRequest, "At least one field (name or email) must be provided.");
+
+            var user = await _userService.UpdateUserByAdminAsync(id, dto.Name, dto.Email, cancellationToken);
+            return Ok(PublicUserDTO.ModelToDTO(user));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    // ─── ADMIN: ADMINS ────────────────────────────────────────────────────────
+
+    [HttpGet("admin/admins")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(List<UserAdminSummaryDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAllAdmins(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var users = await _userService.GetAllByProfileTypeAsync(ProfileType.ADMIN, cancellationToken);
+            return Ok(UserAdminSummaryDTO.ToDTO(users));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpGet("admin/admins/{id}")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(PublicUserDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAdminDetail(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var user = await _userService.GetUserDetailByAdminAsync(id, cancellationToken);
+            return Ok(PublicUserDTO.ModelToDTO(user));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    // ─── ADMIN: PROFILE TYPE ─────────────────────────────────────────────────
+
+    [HttpPut("admin/{id}/profile")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(PublicUserDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangeProfileType(string id, [FromBody] ChangeProfileTypeDTO dto, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var user = await _userService.ChangeUserProfileTypeAsync(id, dto.ProfileType, cancellationToken);
+            return Ok(PublicUserDTO.ModelToDTO(user));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
 }

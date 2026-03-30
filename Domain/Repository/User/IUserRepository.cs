@@ -1,4 +1,5 @@
 ﻿using UserEntity = Domain.Data.Entities.User;
+using Domain.Enumerators;
 using Domain.Repository._Base;
 
 namespace Domain.Repository;
@@ -12,6 +13,7 @@ public interface IUserRepository : IRepository<UserEntity>
     Task<UserEntity> GetByEmailCellphoneAsync(string email, string cellphone, CancellationToken cancellationToken = default);
     Task<UserEntity> GetUserAsync(string id, CancellationToken cancellationToken = default);
     Task<List<UserEntity>> GetAllUserAsync(CancellationToken cancellationToken = default);
+    Task<List<UserEntity>> GetAllByProfileTypeAsync(ProfileType profileType, CancellationToken cancellationToken = default);
 
     //Task<PagedResult<User>> GetAllUserQueryAsync(IQueryable<User> query, int page, int pageSize, bool isDesc, string orderBy, bool isOrdered, CancellationToken cancellationToken = default);
     //Task<PagedResult<ClientGrouped>> GetAllGroupedAsync(BackOfficeClientSearchParameter sp, CancellationToken cancellationToken = default);
