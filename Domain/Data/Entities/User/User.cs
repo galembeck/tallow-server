@@ -25,6 +25,11 @@ public class User : BaseEntity, IBaseEntity<User>
 
 
 
+    public string? AvatarUrl { get; set; }
+    public string? AvatarPath { get; set; }
+
+
+
     public DateTimeOffset? LastAccessAt { get; set; }
 
 
@@ -58,6 +63,9 @@ public class User : BaseEntity, IBaseEntity<User>
 
             ReceiveWhatsappOffers = entity.ReceiveWhatsappOffers,
             ReceiveEmailOffers = entity.ReceiveEmailOffers,
+
+            AvatarUrl = entity.AvatarUrl,
+            AvatarPath = entity.AvatarPath,
 
             LastAccessAt = entity.LastAccessAt,
             

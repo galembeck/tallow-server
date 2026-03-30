@@ -3,6 +3,7 @@ using Domain.Enumerators;
 using Domain.Repository;
 using Domain.SearchParameters;
 using Domain.Services._Base;
+using Microsoft.AspNetCore.Http;
 
 namespace Domain.Services;
 
@@ -18,6 +19,9 @@ public abstract class IUserService : IService<User, IUserRepository, UserSearchP
     public abstract Task<User> GetByDocumentAndEmailAsync(string document, string email, CancellationToken cancellationToken = default);
     public abstract Task<bool> CheckIfPrimaryDocumentAlreadyExist(string primaryDocument, CancellationToken cancellationToken = default);
     public abstract Task<List<User>> GetUsersByEmail(string email, CancellationToken cancellationToken = default);
+
+    // User self-update
+    public abstract Task<User> UpdateProfileAsync(string userId, string? name, string? email, string? document, string? password, bool? receiveEmailOffers, bool? receiveWhatsappOffers, IFormFile? avatar, CancellationToken cancellationToken = default);
 
     // Admin management
     public abstract Task<List<User>> GetAllByProfileTypeAsync(ProfileType profileType, CancellationToken cancellationToken = default);

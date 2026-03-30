@@ -19,6 +19,11 @@ public class PublicUserDTO : PublicBaseDTO<User>
 
 
 
+    public string? AvatarUrl { get; set; }
+
+
+
+    public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastAccessAt { get; set; }
 
 
@@ -35,6 +40,8 @@ public class PublicUserDTO : PublicBaseDTO<User>
         ProfileType = o.ProfileType;
         ReceiveWhatsappOffers = o.ReceiveWhatsappOffers;
         ReceiveEmailOffers = o.ReceiveEmailOffers;
+        AvatarUrl = o.AvatarUrl;
+        CreatedAt = o.CreatedAt;
         LastAccessAt = o.LastAccessAt;
     }
 
@@ -55,6 +62,8 @@ public class PublicUserDTO : PublicBaseDTO<User>
             ProfileType = o.ProfileType,
             ReceiveWhatsappOffers = o.ReceiveWhatsappOffers,
             ReceiveEmailOffers = o.ReceiveEmailOffers,
+            AvatarUrl = o.AvatarUrl,
+            CreatedAt = o.CreatedAt,
             LastAccessAt = o.LastAccessAt,
         };
 

@@ -4,6 +4,7 @@ using Domain.Exceptions;
 using Domain.Repository;
 using Domain.Repository.User;
 using Domain.Utils;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Transactions;
 
@@ -13,8 +14,10 @@ public class UserService(
     IUserRepository repository,
     IUserRepository userRepository,
     IUserSecurityInfoRepository userSecurityInfoRepository,
-    IUserHistoricService userHistoricService) : IUserService(repository)
+    IUserHistoricService userHistoricService,
+    IFileStorageService fileStorageService) : IUserService(repository)
 {
+    private readonly IFileStorageService _fileStorageService = fileStorageService;
     public override async Task<User> CreateAsync(User user, UserSecurityInfo securityInfo)
     {
         try
@@ -152,6 +155,56 @@ public class UserService(
     }
 
 
+
+    public override async Task<User> UpdateProfileAsync(
+        string userId,
+        string? name,
+        string? email,
+        string? document,
+        string? password,
+        bool? receiveEmailOffers,
+        bool? receiveWhatsappOffers,
+        IFormFile? avatar,
+        CancellationToken cancellationToken = default)
+    {
+        string? newAvatarPath = null;
+        string? newAvatarUrl = null;
+
+        if (avatar != null)
+        {
+            using var stream = avatar.OpenReadStream();
+            newAvatarPath = await _fileStorageService.UploadFileAsync(stream, avatar.FileName, "avatars");
+            newAvatarUrl = _fileStorageService.GetFileUrl(newAvatarPath);
+        }
+
+        var hashedPassword = !string.IsNullOrWhiteSpace(password)
+            ? StringUtil.SHA512(password)
+            : null;
+
+        return await _Repository.UpdatePartialAsync(
+            new User { Id = userId },
+            user =>
+            {
+                if (!string.IsNullOrWhiteSpace(name))
+                    user.Name = name;
+                if (!string.IsNullOrWhiteSpace(email))
+                    user.Email = email;
+                if (!string.IsNullOrWhiteSpace(document))
+                    user.Document = document;
+                if (hashedPassword != null)
+                    user.Password = hashedPassword;
+                if (receiveEmailOffers.HasValue)
+                    user.ReceiveEmailOffers = receiveEmailOffers;
+                if (receiveWhatsappOffers.HasValue)
+                    user.ReceiveWhatsappOffers = receiveWhatsappOffers;
+                if (newAvatarPath != null)
+                {
+                    user.AvatarPath = newAvatarPath;
+                    user.AvatarUrl = newAvatarUrl;
+                }
+            },
+            userId);
+    }
 
     public override async Task<List<User>> GetAllByProfileTypeAsync(ProfileType profileType, CancellationToken cancellationToken = default)
     {

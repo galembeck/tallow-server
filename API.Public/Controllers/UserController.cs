@@ -48,6 +48,45 @@ public class UserController(IUserService userService) : _BaseController
         return Ok(PublicUserDTO.ModelToDTO(response));
     }
 
+    [HttpPut("me")]
+    [AuthAttribute]
+    [Filters.Authorize(ProfileType.CLIENT, ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(PublicUserDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UpdateMe([FromForm] UpdateProfileDTO dto, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var userId = Authenticated?.User?.Id;
+
+            if (!string.IsNullOrWhiteSpace(dto.Password))
+            {
+                if (dto.Password != dto.PasswordConfirmation)
+                    return StatusCode(StatusCodes.Status400BadRequest, "Passwords do not match.");
+
+                if (dto.Password.Length < 8)
+                    return StatusCode(StatusCodes.Status400BadRequest, "Password must be at least 8 characters.");
+            }
+
+            var user = await _userService.UpdateProfileAsync(
+                userId,
+                dto.Name,
+                dto.Email,
+                dto.Document,
+                dto.Password,
+                dto.ReceiveEmailOffers,
+                dto.ReceiveWhatsappOffers,
+                dto.Avatar,
+                cancellationToken);
+
+            return Ok(PublicUserDTO.ModelToDTO(user));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
     // ─── ADMIN: CLIENTS ──────────────────────────────────────────────────────
 
     [HttpGet("admin/clients")]

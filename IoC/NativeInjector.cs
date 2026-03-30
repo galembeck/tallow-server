@@ -4,6 +4,8 @@ using Domain.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Repository.Repository;
 using Repository.Repository.User;
+using IWishlistRepository = Domain.Repository.IWishlistRepository;
+using WishlistRepository = Repository.Repository.WishlistRepository;
 
 namespace IoC;
 
@@ -79,6 +81,13 @@ public static class NativeInjector
         services.AddScoped<IOrderService, OrderService>();
 
         #endregion .: ORDER :.
+
+        #region .: WISHLIST :.
+
+        services.AddScoped<IWishlistRepository, WishlistRepository>();
+        services.AddScoped<IWishlistService, WishlistService>();
+
+        #endregion .: WISHLIST :.
 
         #region .: PAYMENT :.
 
