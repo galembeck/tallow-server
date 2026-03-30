@@ -33,7 +33,10 @@ public class WishlistService(
             ProductId = productId
         };
 
-        return await _wishlistRepository.InsertAsync(item, userId);
+        var saved = await _wishlistRepository.InsertAsync(item, userId);
+        saved.Product = product;
+
+        return saved;
     }
 
     public async Task RemoveFromWishlistAsync(string userId, string productId, CancellationToken cancellationToken = default)

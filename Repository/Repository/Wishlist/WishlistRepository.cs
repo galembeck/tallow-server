@@ -31,7 +31,8 @@ public class WishlistRepository : BaseRepository<WishlistItem>, IWishlistReposit
     {
         try
         {
-            return await _entity
+            return await _context.Set<WishlistItem>()
+                .Include(w => w.Product)
                 .Where(w => w.UserId == userId && w.ProductId == productId && w.DeletedAt == null)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(cancellationToken);
