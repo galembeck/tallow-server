@@ -1,4 +1,5 @@
-﻿using Domain.Data.Models;
+﻿using Domain.Data.Entities;
+using Domain.Data.Models;
 
 namespace Domain.Services;
 
@@ -8,4 +9,14 @@ public interface IShippingService
     Task<ShippingQuoteResponse> CalculateFastestShippingAsync(ShippingQuoteRequest request, CancellationToken cancellationToken = default);
     Task<List<ShippingQuoteResponse>> CalculateCartShippingAsync(CartShippingQuoteRequest request, CancellationToken cancellationToken = default);
     Task<ShippingQuoteResponse> CalculateFastestCartShippingAsync(CartShippingQuoteRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Creates a shipping label in SuperFrete (cart + payment) and returns the label URL, tracking code and SuperFrete order ID.
+    /// </summary>
+    Task<ShipmentResult> CreateShipmentAsync(Order order, int serviceCode, float packageWeight, float packageHeight, float packageWidth, float packageLength, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns live tracking events for a given SuperFrete order ID.
+    /// </summary>
+    Task<SuperFreteTrackingResponse> GetTrackingAsync(string superFreteOrderId, CancellationToken cancellationToken = default);
 }

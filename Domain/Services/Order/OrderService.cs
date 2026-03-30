@@ -9,10 +9,12 @@ namespace Domain.Services;
 
 public class OrderService(
     IOrderRepository orderRepository,
-    ICartRepository cartRepository) : IOrderService
+    ICartRepository cartRepository,
+    IShippingService shippingService) : IOrderService
 {
     private readonly IOrderRepository _orderRepository = orderRepository;
     private readonly ICartRepository _cartRepository = cartRepository;
+    private readonly IShippingService _shippingService = shippingService;
 
     public async Task<Order> CreateOrderFromCartAsync(
         string userId,
@@ -86,6 +88,11 @@ public class OrderService(
         return await _orderRepository.GetAllWithRelationsAsync(cancellationToken);
     }
 
+    public async Task<List<Order>> GetAllByStatusAsync(OrderStatus status, CancellationToken cancellationToken = default)
+    {
+        return await _orderRepository.GetByStatusAsync(status, cancellationToken);
+    }
+
     public async Task<Order> UpdateOrderStatusAsync(
         string orderId,
         OrderStatus newStatus,
@@ -99,6 +106,8 @@ public class OrderService(
 
                 if (newStatus == OrderStatus.PAYMENT_APPROVED)
                     order.PaymentApprovedAt = DateTime.UtcNow;
+                else if (newStatus == OrderStatus.PROCESSING)
+                    order.ProcessingAt = DateTime.UtcNow;
                 else if (newStatus == OrderStatus.SHIPPED)
                     order.ShippedAt = DateTime.UtcNow;
                 else if (newStatus == OrderStatus.DELIVERED)
@@ -106,5 +115,87 @@ public class OrderService(
                 else if (newStatus == OrderStatus.CANCELLED)
                     order.CancelledAt = DateTime.UtcNow;
             });
+    }
+
+    public async Task<Order> MarkAsPreparingAsync(string orderId, string? adminNotes, CancellationToken cancellationToken = default)
+    {
+        return await _orderRepository.UpdatePartialAsync(
+            new Order { Id = orderId },
+            order =>
+            {
+                order.Status = OrderStatus.PREPARING;
+                order.PreparingAt = DateTime.UtcNow;
+
+                if (!string.IsNullOrWhiteSpace(adminNotes))
+                    order.AdminNotes = adminNotes;
+            });
+    }
+
+    public async Task<Order> ShipOrderAsync(
+        string orderId,
+        int serviceCode,
+        float packageWeight,
+        float packageHeight,
+        float packageWidth,
+        float packageLength,
+        string? adminNotes,
+        CancellationToken cancellationToken = default)
+    {
+        var order = await _orderRepository.GetByIdWithItemsAsync(orderId, cancellationToken)
+            ?? throw new BusinessException(BusinessErrorMessage.ORDER_NOT_FOUND);
+
+        var shipment = await _shippingService.CreateShipmentAsync(
+            order, serviceCode, packageWeight, packageHeight, packageWidth, packageLength, cancellationToken);
+
+        return await _orderRepository.UpdatePartialAsync(
+            new Order { Id = orderId },
+            o =>
+            {
+                o.Status = OrderStatus.SHIPPED;
+                o.ShippedAt = DateTime.UtcNow;
+                o.SuperFreteOrderId = shipment.SuperFreteOrderId;
+                o.TrackingCode = shipment.TrackingCode;
+                o.ShippingLabelUrl = shipment.LabelUrl;
+                o.TrackingUrl = shipment.TrackingUrl;
+
+                if (!string.IsNullOrWhiteSpace(adminNotes))
+                    o.AdminNotes = adminNotes;
+            });
+    }
+
+    public async Task<Order> MarkAsDeliveredAsync(string orderId, CancellationToken cancellationToken = default)
+    {
+        return await _orderRepository.UpdatePartialAsync(
+            new Order { Id = orderId },
+            order =>
+            {
+                order.Status = OrderStatus.DELIVERED;
+                order.DeliveredAt = DateTime.UtcNow;
+            });
+    }
+
+    public async Task<Order> CancelOrderAsync(string orderId, string? adminNotes, CancellationToken cancellationToken = default)
+    {
+        return await _orderRepository.UpdatePartialAsync(
+            new Order { Id = orderId },
+            order =>
+            {
+                order.Status = OrderStatus.CANCELLED;
+                order.CancelledAt = DateTime.UtcNow;
+
+                if (!string.IsNullOrWhiteSpace(adminNotes))
+                    order.AdminNotes = adminNotes;
+            });
+    }
+
+    public async Task<SuperFreteTrackingResponse> GetOrderTrackingAsync(string orderId, CancellationToken cancellationToken = default)
+    {
+        var order = await _orderRepository.GetByIdWithItemsAsync(orderId, cancellationToken)
+            ?? throw new BusinessException(BusinessErrorMessage.ORDER_NOT_FOUND);
+
+        if (string.IsNullOrEmpty(order.SuperFreteOrderId))
+            throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+
+        return await _shippingService.GetTrackingAsync(order.SuperFreteOrderId, cancellationToken);
     }
 }

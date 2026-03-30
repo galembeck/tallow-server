@@ -1,4 +1,5 @@
 ﻿using Domain.Constants;
+using Domain.Data.Entities;
 using Domain.Data.Models;
 using Domain.Enumerators;
 using Domain.Exceptions;
@@ -207,6 +208,143 @@ public class ShippingService : IShippingService
     }
 
 
+
+    public async Task<ShipmentResult> CreateShipmentAsync(
+        Order order,
+        int serviceCode,
+        float packageWeight,
+        float packageHeight,
+        float packageWidth,
+        float packageLength,
+        CancellationToken cancellationToken = default)
+    {
+        var settings = Constant.Settings.ShippingServiceSettings;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+
+        // Step 1: Add order to SuperFrete cart
+        var cartRequest = new SuperFreteOrderRequest
+        {
+            Service = serviceCode,
+            From = new SuperFreteAddress
+            {
+                Name = settings.SenderName,
+                Document = settings.SenderDocument,
+                Email = settings.SenderEmail,
+                Phone = settings.SenderPhone,
+                Address = settings.SenderAddress,
+                Number = settings.SenderAddressNumber,
+                District = settings.SenderDistrict,
+                City = settings.SenderCity,
+                StateAbbr = settings.SenderStateAbbr,
+                PostalCode = settings.ShippingPostalCode.Replace("-", "").Trim()
+            },
+            To = new SuperFreteAddress
+            {
+                Name = order.BuyerName,
+                Document = order.BuyerDocument?.Replace(".", "").Replace("-", "") ?? string.Empty,
+                Email = order.BuyerEmail,
+                Phone = order.BuyerCellphone?.Replace("(", "").Replace(")", "").Replace("-", "").Replace(" ", "") ?? string.Empty,
+                Address = order.ShippingAddress,
+                Complement = order.ShippingComplement,
+                Number = order.ShippingNumber,
+                District = order.ShippingNeighborhood,
+                City = order.ShippingCity,
+                StateAbbr = order.ShippingState,
+                PostalCode = order.ShippingZipcode?.Replace("-", "").Trim() ?? string.Empty
+            },
+            Products = new List<SuperFreteProduct>
+            {
+                new SuperFreteProduct
+                {
+                    Name = $"Pedido #{order.Id[..8]}",
+                    Quantity = order.Items?.Sum(i => i.Quantity) ?? 1,
+                    UnitaryValue = order.SubTotalAmount,
+                    Weight = packageWeight
+                }
+            },
+            Volumes = new List<SuperFreteVolume>
+            {
+                new SuperFreteVolume
+                {
+                    Height = packageHeight,
+                    Width = packageWidth,
+                    Length = packageLength,
+                    Weight = packageWeight
+                }
+            },
+            Options = new SuperFreteOrderOptions
+            {
+                InsuranceValue = order.TotalAmount,
+                Receipt = false,
+                OwnHand = false,
+                Collect = false,
+                Reverse = false,
+                NonCommercial = false
+            }
+        };
+
+        var cartJson = JsonSerializer.Serialize(cartRequest, options);
+        var cartContent = new StringContent(cartJson, Encoding.UTF8, "application/json");
+        var cartResponse = await _httpClient.PostAsync("api/v0/cart", cartContent, cancellationToken);
+
+        if (!cartResponse.IsSuccessStatusCode)
+            throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+
+        var cartBody = await cartResponse.Content.ReadAsStringAsync(cancellationToken);
+        var cartResult = JsonSerializer.Deserialize<SuperFreteOrderResponse>(cartBody, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        if (cartResult?.Id == null || !string.IsNullOrEmpty(cartResult.Error))
+            throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+
+        // Step 2: Pay for the cart — this generates the shipping label
+        var payRequest = new SuperFreteCartPaymentRequest { Orders = new List<string> { cartResult.Id } };
+        var payJson = JsonSerializer.Serialize(payRequest, options);
+        var payContent = new StringContent(payJson, Encoding.UTF8, "application/json");
+        var payResponse = await _httpClient.PostAsync("api/v0/cart/payment", payContent, cancellationToken);
+
+        if (!payResponse.IsSuccessStatusCode)
+            throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+
+        var payBody = await payResponse.Content.ReadAsStringAsync(cancellationToken);
+        var paidOrders = JsonSerializer.Deserialize<List<SuperFreteOrderResponse>>(payBody, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        var paid = paidOrders?.FirstOrDefault();
+
+        return new ShipmentResult
+        {
+            SuperFreteOrderId = cartResult.Id,
+            TrackingCode = paid?.Tracking ?? cartResult.Tracking,
+            LabelUrl = paid?.Print ?? cartResult.Print,
+            TrackingUrl = paid?.Tracking != null
+                ? $"https://superfrete.com/rastreio/{paid.Tracking}"
+                : null
+        };
+    }
+
+    public async Task<SuperFreteTrackingResponse> GetTrackingAsync(string superFreteOrderId, CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.GetAsync($"api/v0/tracking/{superFreteOrderId}", cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+            throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+
+        var body = await response.Content.ReadAsStringAsync(cancellationToken);
+
+        return JsonSerializer.Deserialize<SuperFreteTrackingResponse>(body, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        }) ?? new SuperFreteTrackingResponse();
+    }
 
     #region .: HELPER METHODS :.
 

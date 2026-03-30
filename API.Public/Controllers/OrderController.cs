@@ -37,6 +37,24 @@ public class OrderController : _BaseController
         }
     }
 
+    [HttpGet("admin/status/{status}")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(List<OrderAdminSummaryDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetOrdersByStatus(Domain.Enumerators.OrderStatus status, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var orders = await _orderService.GetAllByStatusAsync(status, cancellationToken);
+            return Ok(OrderAdminSummaryDTO.ToDTO(orders));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
     [HttpGet("admin/{id}")]
     [AuthAttribute]
     [AuthorizeAttribute(ProfileType.ADMIN)]
@@ -53,6 +71,122 @@ public class OrderController : _BaseController
                 return NotFound();
 
             return Ok(OrderResponseDTO.ToDTO(order));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpPatch("admin/{id}/prepare")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(OrderAdminSummaryDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> MarkAsPreparing(string id, [FromBody] OrderAdminActionDTO dto, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var order = await _orderService.MarkAsPreparingAsync(id, dto.AdminNotes, cancellationToken);
+            return Ok(OrderAdminSummaryDTO.ToDTO(order));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpPost("admin/{id}/ship")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(OrderAdminSummaryDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ShipOrder(string id, [FromBody] ShipOrderDTO dto, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var order = await _orderService.ShipOrderAsync(
+                id,
+                dto.ServiceCode,
+                dto.PackageWeight,
+                dto.PackageHeight,
+                dto.PackageWidth,
+                dto.PackageLength,
+                dto.AdminNotes,
+                cancellationToken);
+
+            return Ok(OrderAdminSummaryDTO.ToDTO(order));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpPatch("admin/{id}/deliver")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(OrderAdminSummaryDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> MarkAsDelivered(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var order = await _orderService.MarkAsDeliveredAsync(id, cancellationToken);
+            return Ok(OrderAdminSummaryDTO.ToDTO(order));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpPatch("admin/{id}/cancel")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(OrderAdminSummaryDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CancelOrder(string id, [FromBody] OrderAdminActionDTO dto, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var order = await _orderService.CancelOrderAsync(id, dto.AdminNotes, cancellationToken);
+            return Ok(OrderAdminSummaryDTO.ToDTO(order));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpGet("admin/{id}/tracking")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(OrderTrackingDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetOrderTracking(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tracking = await _orderService.GetOrderTrackingAsync(id, cancellationToken);
+            return Ok(OrderTrackingDTO.FromSuperFrete(tracking));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    [HttpGet("{id}/tracking")]
+    [AuthAttribute]
+    [ProducesResponseType(typeof(OrderTrackingDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetMyOrderTracking(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tracking = await _orderService.GetOrderTrackingAsync(id, cancellationToken);
+            return Ok(OrderTrackingDTO.FromSuperFrete(tracking));
         }
         catch (Exception e)
         {

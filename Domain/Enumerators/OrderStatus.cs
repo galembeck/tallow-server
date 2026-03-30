@@ -17,6 +17,9 @@ public enum OrderStatus
     [EnumDescription("PROCESSING")]
     PROCESSING = 4,
 
+    [EnumDescription("PREPARING")]
+    PREPARING = 9,
+
     [EnumDescription("SHIPPED")]
     SHIPPED = 5,
 

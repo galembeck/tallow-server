@@ -38,8 +38,13 @@ public class Order : BaseEntity, IBaseEntity<Order>
     public string BuyerDocument { get; set; }
 
     public string? TrackingCode { get; set; }
+    public string? SuperFreteOrderId { get; set; }
+    public string? ShippingLabelUrl { get; set; }
+    public string? TrackingUrl { get; set; }
 
     public DateTime? PaymentApprovedAt { get; set; }
+    public DateTime? ProcessingAt { get; set; }
+    public DateTime? PreparingAt { get; set; }
     public DateTime? ShippedAt { get; set; }
     public DateTime? DeliveredAt { get; set; }
     public DateTime? CancelledAt { get; set; }
@@ -77,7 +82,12 @@ public class Order : BaseEntity, IBaseEntity<Order>
             BuyerCellphone = entity.BuyerCellphone,
             BuyerDocument = entity.BuyerDocument,
             TrackingCode = entity.TrackingCode,
+            SuperFreteOrderId = entity.SuperFreteOrderId,
+            ShippingLabelUrl = entity.ShippingLabelUrl,
+            TrackingUrl = entity.TrackingUrl,
             PaymentApprovedAt = entity.PaymentApprovedAt,
+            ProcessingAt = entity.ProcessingAt,
+            PreparingAt = entity.PreparingAt,
             ShippedAt = entity.ShippedAt,
             DeliveredAt = entity.DeliveredAt,
             CancelledAt = entity.CancelledAt,
