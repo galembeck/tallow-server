@@ -83,7 +83,7 @@ public class PaymentDetailDTO
         Installments = payment.Installments,
 
         TransactionAmount = payment.TransactionAmount,
-        ShippingAmount = payment.ShippingAmount,
+        ShippingAmount = payment.Order?.ShippingAmount ?? payment.ShippingAmount,
         OrderSubTotal = payment.Order?.SubTotalAmount ?? 0,
         OrderTotal = payment.Order?.TotalAmount ?? 0,
         CurrencyId = payment.CurrencyId ?? "BRL",

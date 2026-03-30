@@ -9,10 +9,12 @@ namespace Domain.Services;
 
 public class PaymentService(
     IPaymentRepository paymentRepository,
-    IMercadoPagoService mercadoPagoService) : IPaymentService
+    IMercadoPagoService mercadoPagoService,
+    IOrderRepository orderRepository) : IPaymentService
 {
     private readonly IPaymentRepository _paymentRepository = paymentRepository;
     private readonly IMercadoPagoService _mercadoPagoService = mercadoPagoService;
+    private readonly IOrderRepository _orderRepository = orderRepository;
 
     public async Task<Payment> CreatePaymentAsync(
         string userId,
@@ -21,6 +23,8 @@ public class PaymentService(
         CancellationToken cancellationToken = default)
     {
         var mpResponse = await _mercadoPagoService.CreatePaymentAsync(request, cancellationToken);
+
+        var order = await _orderRepository.GetAsync(orderId, cancellationToken);
 
         var payment = new Payment
         {
@@ -41,7 +45,7 @@ public class PaymentService(
             AuthorizationCode = mpResponse.AuthorizationCode,
             LiveMode = mpResponse.LiveMode,
             StatementDescriptor = mpResponse.StatementDescriptor,
-            ShippingAmount = mpResponse.ShippingAmount,
+            ShippingAmount = order?.ShippingAmount ?? mpResponse.ShippingAmount,
 
             ExternalReference = mpResponse.ExternalReference,
             StatusDetail = mpResponse.StatusDetail,

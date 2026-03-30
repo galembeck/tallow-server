@@ -48,7 +48,7 @@ public class PaymentAdminDTO
         Installments = payment.Installments,
 
         TransactionAmount = payment.TransactionAmount,
-        ShippingAmount = payment.ShippingAmount,
+        ShippingAmount = payment.Order?.ShippingAmount ?? payment.ShippingAmount,
         CurrencyId = payment.CurrencyId ?? "BRL",
 
         PayerName = payment.Order?.BuyerName ?? payment.User?.Name,
