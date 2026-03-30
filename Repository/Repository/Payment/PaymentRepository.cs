@@ -37,4 +37,15 @@ public class PaymentRepository : BaseRepository<Payment>, IPaymentRepository
             .OrderByDescending(p => p.CreatedAt)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<List<Payment>> GetAllWithRelationsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Set<Payment>()
+            .Include(p => p.User)
+            .Include(p => p.Order)
+                .ThenInclude(o => o.Items)
+            .Where(p => p.DeletedAt == null)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }

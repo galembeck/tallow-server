@@ -79,6 +79,11 @@ public class PaymentService(
         return await _paymentRepository.GetByUserIdAsync(userId, cancellationToken);
     }
 
+    public async Task<List<Payment>> GetAllPaymentsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _paymentRepository.GetAllWithRelationsAsync(cancellationToken);
+    }
+
     public async Task<Payment> UpdatePaymentStatusAsync(
         long mercadoPagoPaymentId,
         CancellationToken cancellationToken = default)

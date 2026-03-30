@@ -212,6 +212,24 @@ public class PaymentController : _BaseController
         }
     }
 
+    [HttpGet("admin/all")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(List<PaymentAdminDTO>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAllPayments(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var payments = await _paymentService.GetAllPaymentsAsync(cancellationToken);
+            return Ok(PaymentAdminDTO.ToDTO(payments));
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
     [HttpGet("{id}")]
     [AuthAttribute]
     [ProducesResponseType(typeof(PaymentResponseDTO), StatusCodes.Status200OK)]

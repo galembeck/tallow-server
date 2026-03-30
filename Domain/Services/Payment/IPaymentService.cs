@@ -13,6 +13,7 @@ public interface IPaymentService
 
     Task<Payment?> GetPaymentByIdAsync(string paymentId, CancellationToken cancellationToken = default);
     Task<List<Payment>> GetUserPaymentsAsync(string userId, CancellationToken cancellationToken = default);
+    Task<List<Payment>> GetAllPaymentsAsync(CancellationToken cancellationToken = default);
 
     Task<Payment> UpdatePaymentStatusAsync(long mercadoPagoPaymentId, CancellationToken cancellationToken = default);
 }
