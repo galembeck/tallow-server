@@ -19,4 +19,9 @@ public interface IShippingService
     /// Returns live tracking events for a given SuperFrete order ID.
     /// </summary>
     Task<SuperFreteTrackingResponse> GetTrackingAsync(string superFreteOrderId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Streams the printable shipping label PDF from SuperFrete for the given order ID.
+    /// </summary>
+    Task<(Stream Content, string ContentType)> GetLabelAsync(string superFreteOrderId, CancellationToken cancellationToken = default);
 }

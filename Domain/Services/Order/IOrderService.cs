@@ -19,4 +19,5 @@ public interface IOrderService
     Task<Order> MarkAsDeliveredAsync(string orderId, CancellationToken cancellationToken = default);
     Task<Order> CancelOrderAsync(string orderId, string? adminNotes, CancellationToken cancellationToken = default);
     Task<SuperFreteTrackingResponse> GetOrderTrackingAsync(string orderId, CancellationToken cancellationToken = default);
+    Task<(Stream Content, string ContentType)> GetOrderLabelAsync(string orderId, CancellationToken cancellationToken = default);
 }

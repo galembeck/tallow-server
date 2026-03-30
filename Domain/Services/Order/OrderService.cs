@@ -198,4 +198,15 @@ public class OrderService(
 
         return await _shippingService.GetTrackingAsync(order.SuperFreteOrderId, cancellationToken);
     }
+
+    public async Task<(Stream Content, string ContentType)> GetOrderLabelAsync(string orderId, CancellationToken cancellationToken = default)
+    {
+        var order = await _orderRepository.GetByIdWithItemsAsync(orderId, cancellationToken)
+            ?? throw new BusinessException(BusinessErrorMessage.ORDER_NOT_FOUND);
+
+        if (string.IsNullOrEmpty(order.SuperFreteOrderId))
+            throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+
+        return await _shippingService.GetLabelAsync(order.SuperFreteOrderId, cancellationToken);
+    }
 }

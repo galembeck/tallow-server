@@ -346,6 +346,22 @@ public class ShippingService : IShippingService
         }) ?? new SuperFreteTrackingResponse();
     }
 
+    public async Task<(Stream Content, string ContentType)> GetLabelAsync(string superFreteOrderId, CancellationToken cancellationToken = default)
+    {
+        var payload = JsonSerializer.Serialize(new { orders = new[] { superFreteOrderId } });
+        var content = new StringContent(payload, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync("api/v0/print", content, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+            throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+
+        var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/pdf";
+
+        return (stream, contentType);
+    }
+
     #region .: HELPER METHODS :.
 
     private static decimal ParseDecimalFromString(string value)

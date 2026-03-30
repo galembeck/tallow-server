@@ -177,6 +177,24 @@ public class OrderController : _BaseController
         }
     }
 
+    [HttpGet("admin/{id}/label")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetShippingLabel(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var (stream, contentType) = await _orderService.GetOrderLabelAsync(id, cancellationToken);
+            return File(stream, contentType, $"label-{id}.pdf");
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
     [HttpGet("{id}/tracking")]
     [AuthAttribute]
     [ProducesResponseType(typeof(OrderTrackingDTO), StatusCodes.Status200OK)]
