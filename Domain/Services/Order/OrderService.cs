@@ -2,6 +2,7 @@
 using Domain.Data.Entities;
 using Domain.Data.Models;
 using Domain.Enumerators;
+using Domain.Exceptions;
 using Domain.Repository;
 
 namespace Domain.Services;
