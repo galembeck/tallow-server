@@ -23,6 +23,9 @@ public class PaymentAdminDTO
     public decimal? ShippingAmount { get; set; }
     public string? CurrencyId { get; set; }
 
+    public string? PayerName { get; set; }
+    public string? PayerDocument { get; set; }
+
     public bool? LiveMode { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
@@ -47,6 +50,9 @@ public class PaymentAdminDTO
         TransactionAmount = payment.TransactionAmount,
         ShippingAmount = payment.ShippingAmount,
         CurrencyId = payment.CurrencyId ?? "BRL",
+
+        PayerName = payment.Order?.BuyerName ?? payment.User?.Name,
+        PayerDocument = payment.Order?.BuyerDocument,
 
         LiveMode = payment.LiveMode,
 
