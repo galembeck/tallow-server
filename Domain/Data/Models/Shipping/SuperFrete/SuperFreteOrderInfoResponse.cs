@@ -1,3 +1,4 @@
+using Domain.Utils;
 using System.Text.Json.Serialization;
 
 namespace Domain.Data.Models;
@@ -20,22 +21,28 @@ public class SuperFreteOrderInfoResponse
     public int DeliveryMax { get; set; }
 
     [JsonPropertyName("discount")]
-    public decimal Discount { get; set; }
+    [JsonConverter(typeof(FlexibleStringConverter))]
+    public string Discount { get; set; }
 
     [JsonPropertyName("height")]
+    [JsonConverter(typeof(FlexibleFloatConverter))]
     public float Height { get; set; }
 
     [JsonPropertyName("width")]
+    [JsonConverter(typeof(FlexibleFloatConverter))]
     public float Width { get; set; }
 
     [JsonPropertyName("length")]
+    [JsonConverter(typeof(FlexibleFloatConverter))]
     public float Length { get; set; }
 
     [JsonPropertyName("weight")]
+    [JsonConverter(typeof(FlexibleFloatConverter))]
     public float Weight { get; set; }
 
     [JsonPropertyName("price")]
-    public decimal Price { get; set; }
+    [JsonConverter(typeof(FlexibleStringConverter))]
+    public string Price { get; set; }
 
     [JsonPropertyName("tracking")]
     public string? Tracking { get; set; }
@@ -50,7 +57,8 @@ public class SuperFreteOrderInfoResponse
     public List<SuperFreteOrderInfoProduct>? Products { get; set; }
 
     [JsonPropertyName("insurance_value")]
-    public decimal? InsuranceValue { get; set; }
+    [JsonConverter(typeof(FlexibleStringConverter))]
+    public string? InsuranceValue { get; set; }
 
     [JsonPropertyName("generated_at")]
     public DateTime? GeneratedAt { get; set; }
