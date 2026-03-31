@@ -1,4 +1,5 @@
 ﻿using API.Public.Configuration;
+using API.Public.Services;
 using AspNetCoreRateLimit;
 using Domain.Constants;
 using Domain.Services;
@@ -24,6 +25,8 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<IMercadoPagoService, MercadoPagoService>();
 
         services.ConfigureInjections();
+        services.AddSignalR();
+        services.AddScoped<IAdminNotificationService, AdminNotificationService>();
         services.AddAuthorization();
         services.AddResponseCompression();
         services.ConfigureCompression();
