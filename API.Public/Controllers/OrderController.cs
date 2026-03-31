@@ -98,10 +98,12 @@ public class OrderController : _BaseController
     /// <summary>
     /// Runs the full SuperFrete shipping flow in one step:
     ///   1. Adds the order to the SuperFrete cart
-    ///   2. Checks out (generates label + tracking code)
-    ///   3. Persists tracking code and label URL
-    ///   4. Sets order status to SHIPPED
-    ///   5. Broadcasts real-time notification to admin hub
+    ///   2. Checks out (deducts balance, assigns tracking code on most carriers)
+    ///   3. Prints the label (generates the PDF — required to confirm the tracking code)
+    ///   4. Fetches definitive order info (guarantees tracking code is populated)
+    ///   5. Persists superFreteOrderId, tracking code and label URL
+    ///   6. Sets order status to SHIPPED
+    ///   7. Broadcasts real-time notification to admin hub
     ///
     /// Called when the admin clicks "Marcar como Enviado".
     /// </summary>
@@ -127,28 +129,38 @@ public class OrderController : _BaseController
                 superFreteOrderId: cartResponse.Id,
                 cancellationToken: cancellationToken);
 
-            // Step 2 – checkout (deducts balance, gets tracking code)
+            // Step 2 – checkout (deducts balance; tracking may already be present here)
             var checkoutResponse = await _shippingService.CheckoutOrderAsync(cartResponse.Id, cancellationToken);
             var purchaseOrder    = checkoutResponse.Purchase?.Orders?.FirstOrDefault();
 
+            // Step 3 – print label (confirms the shipment and ensures tracking is generated)
+            var printResponse = await _shippingService.PrintLabelAsync(cartResponse.Id, cancellationToken);
+
+            // Step 4 – fetch definitive order info (tracking code is always present here)
+            var orderInfo    = await _shippingService.GetOrderInfoAsync(cartResponse.Id, cancellationToken);
+            var trackingCode = orderInfo.Tracking
+                               ?? purchaseOrder?.Tracking
+                               ?? string.Empty;
+            var labelUrl     = printResponse.Url
+                               ?? purchaseOrder?.Print?.Url;
+
             await _orderService.UpdateOrderSuperFreteDataAsync(
                 id,
-                trackingCode: purchaseOrder?.Tracking,
-                labelUrl:     purchaseOrder?.Print?.Url,
+                trackingCode: trackingCode,
+                labelUrl:     labelUrl,
                 cancellationToken: cancellationToken);
 
-            // Step 3 – set status to SHIPPED
+            // Step 5 – set status to SHIPPED
             await _orderService.UpdateOrderStatusAsync(id, OrderStatus.SHIPPED, cancellationToken);
 
-            // Step 4 – notify admin hub
-            var trackingCode = purchaseOrder?.Tracking ?? string.Empty;
+            // Step 6 – notify admin hub
             await _notificationService.NotifyOrderShippedAsync(id, trackingCode, cancellationToken);
 
             return Ok(new
             {
                 superFreteOrderId = cartResponse.Id,
-                trackingCode      = purchaseOrder?.Tracking,
-                labelUrl          = purchaseOrder?.Print?.Url
+                trackingCode,
+                labelUrl
             });
         }
         catch (Exception e)
