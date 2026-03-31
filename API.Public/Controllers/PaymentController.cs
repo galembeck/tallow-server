@@ -155,7 +155,16 @@ public class PaymentController : _BaseController
                             Email = dto.Payer.Email,
                             FirstName = payerFirstName,
                             LastName = payerLastName,
-                            Identification = payerIdentification
+                            Identification = payerIdentification,
+                            Address = new AddressRequest
+                            {
+                                ZipCode      = order.ShippingZipcode?.Replace("-", ""),
+                                StreetName   = order.ShippingAddress,
+                                StreetNumber = order.ShippingNumber,
+                                Neighborhood = order.ShippingNeighborhood,
+                                City         = order.ShippingCity,
+                                FederalUnit  = order.ShippingState
+                            }
                         },
                         AdditionalInfo = additionalInfo,
                         Metadata = sharedMetadata

@@ -25,4 +25,10 @@ public class PayerRequest
 
     [JsonPropertyName("last_name")]
     public string? LastName { get; set; }
+
+    /// <summary>
+    /// Required by Mercado Pago for Boleto payments.
+    /// </summary>
+    [JsonPropertyName("address")]
+    public AddressRequest? Address { get; set; }
 }
