@@ -3,6 +3,7 @@ using Domain.Data.Entities;
 using Domain.Data.Models;
 using Domain.Enumerators;
 using Domain.Exceptions;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -12,6 +13,7 @@ namespace Domain.Services;
 public class ShippingService : IShippingService
 {
     private readonly HttpClient _httpClient;
+    private readonly ILogger<ShippingService> _logger;
 
     private readonly string _apiToken;
     private readonly string _fromZipCode;
@@ -27,8 +29,9 @@ public class ShippingService : IShippingService
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public ShippingService(IHttpClientFactory httpClientFactory)
+    public ShippingService(IHttpClientFactory httpClientFactory, ILogger<ShippingService> logger)
     {
+        _logger = logger;
         _apiToken = Constant.Settings.ShippingServiceSettings.ServiceAPIKey;
         _fromZipCode = Constant.Settings.ShippingServiceSettings.ShippingPostalCode;
 
@@ -314,6 +317,8 @@ public class ShippingService : IShippingService
             }
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogInformation("[SuperFrete] Checkout raw response: {Json}", responseContent);
+
             return JsonSerializer.Deserialize<SuperFreteCheckoutResponse>(responseContent, _deserializeOptions)
                 ?? throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
         }
@@ -369,6 +374,8 @@ public class ShippingService : IShippingService
             }
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogInformation("[SuperFrete] OrderInfo raw response: {Json}", responseContent);
+
             return JsonSerializer.Deserialize<SuperFreteOrderInfoResponse>(responseContent, _deserializeOptions)
                 ?? throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
         }
