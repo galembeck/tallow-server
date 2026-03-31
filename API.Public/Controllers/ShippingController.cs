@@ -2,11 +2,11 @@ using API.Public.Controllers._Base;
 using API.Public.DTOs;
 using API.Public.DTOs.Shipping;
 using API.Public.DTOs.Shipping.Admin;
+using API.Public.Filters;
 using Domain.Constants;
 using Domain.Data.Models;
 using Domain.Enumerators;
 using Domain.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Public.Controllers;
@@ -26,7 +26,6 @@ public class ShippingController(
         ?? throw new ArgumentNullException(nameof(orderService));
 
     [HttpPost("calculate")]
-    [AllowAnonymous]
     public async Task<IActionResult> CalculateShipping([FromBody] ShippingQuoteRequestDTO body, CancellationToken cancellationToken = default)
     {
         try
@@ -55,7 +54,6 @@ public class ShippingController(
     }
 
     [HttpPost("calculate/fastest")]
-    [AllowAnonymous]
     public async Task<IActionResult> CalculateFastestShipping([FromBody] ShippingQuoteRequestDTO body, CancellationToken cancellationToken = default)
     {
         try
@@ -84,7 +82,6 @@ public class ShippingController(
     }
 
     [HttpPost("calculate/cart")]
-    [AllowAnonymous]
     public async Task<IActionResult> CalculateCartShipping([FromBody] CartShippingQuoteRequestDTO body, CancellationToken cancellationToken = default)
     {
         try
@@ -123,7 +120,6 @@ public class ShippingController(
     }
 
     [HttpPost("calculate/cart/fastest")]
-    [AllowAnonymous]
     public async Task<IActionResult> CalculateFastestCartShipping([FromBody] CartShippingQuoteRequestDTO body, CancellationToken cancellationToken = default)
     {
         try
@@ -166,7 +162,8 @@ public class ShippingController(
     /// Returns the SuperFrete order ID and price. Call /checkout next to generate the label.
     /// </summary>
     [HttpPost("admin/order/{orderId}/cart")]
-    [Authorize]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
     public async Task<IActionResult> AddToCart(string orderId, [FromBody] AddToCartRequestDTO body, CancellationToken cancellationToken = default)
     {
         try
@@ -201,7 +198,8 @@ public class ShippingController(
     /// Deducts the cost from your SuperFrete balance and returns the tracking code + print URL.
     /// </summary>
     [HttpPost("admin/order/{orderId}/checkout")]
-    [Authorize]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
     public async Task<IActionResult> Checkout(string orderId, CancellationToken cancellationToken = default)
     {
         try
@@ -247,7 +245,8 @@ public class ShippingController(
     /// Step 3 — Get the PDF print URL for the shipping label (POST /api/v0/tag/print).
     /// </summary>
     [HttpPost("admin/order/{orderId}/print")]
-    [Authorize]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
     public async Task<IActionResult> PrintLabel(string orderId, CancellationToken cancellationToken = default)
     {
         try
@@ -278,7 +277,8 @@ public class ShippingController(
     /// Track the shipment status and get full label info (GET /api/v0/order/info/{id}).
     /// </summary>
     [HttpGet("admin/order/{orderId}/track")]
-    [Authorize]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
     public async Task<IActionResult> TrackOrder(string orderId, CancellationToken cancellationToken = default)
     {
         try
@@ -336,7 +336,8 @@ public class ShippingController(
     /// Only works for labels that have not yet been posted.
     /// </summary>
     [HttpPost("admin/order/{orderId}/cancel")]
-    [Authorize]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
     public async Task<IActionResult> CancelShipment(string orderId, [FromBody] CancelShipmentRequestDTO body, CancellationToken cancellationToken = default)
     {
         try
