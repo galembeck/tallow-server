@@ -421,6 +421,32 @@ public class ShippingService : IShippingService
 
 
 
+    public async Task<(byte[] Bytes, string ContentType)> DownloadLabelAsync(string labelUrl, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Use an absolute URI — HttpClient will still send the Authorization header
+            // that was configured at construction time, which SuperFrete requires.
+            var response = await _httpClient.GetAsync(labelUrl, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+                throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+
+            var bytes       = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/pdf";
+
+            return (bytes, contentType);
+        }
+        catch (HttpRequestException)
+        {
+            throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+    }
+
     #region .: HELPER METHODS :.
 
     private static decimal ParseDecimalFromString(string value)

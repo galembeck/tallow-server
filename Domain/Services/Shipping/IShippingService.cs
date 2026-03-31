@@ -16,4 +16,10 @@ public interface IShippingService
     Task<SuperFretePrintResponse> PrintLabelAsync(string superFreteOrderId, CancellationToken cancellationToken = default);
     Task<SuperFreteOrderInfoResponse> GetOrderInfoAsync(string superFreteOrderId, CancellationToken cancellationToken = default);
     Task<bool> CancelOrderAsync(string superFreteOrderId, string description = "Cancelado pelo usuário", CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Downloads the shipping label PDF from SuperFrete using the stored API token
+    /// and returns the raw bytes + MIME type so the controller can proxy it to the client.
+    /// </summary>
+    Task<(byte[] Bytes, string ContentType)> DownloadLabelAsync(string labelUrl, CancellationToken cancellationToken = default);
 }

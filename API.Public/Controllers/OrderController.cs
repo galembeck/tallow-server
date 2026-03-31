@@ -5,6 +5,7 @@ using Domain.Enumerators;
 using Domain.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace API.Public.Controllers;
 
@@ -15,15 +16,18 @@ public class OrderController : _BaseController
     private readonly IOrderService _orderService;
     private readonly IShippingService _shippingService;
     private readonly IAdminNotificationService _notificationService;
+    private readonly ILogger<OrderController> _logger;
 
     public OrderController(
         IOrderService orderService,
         IShippingService shippingService,
-        IAdminNotificationService notificationService)
+        IAdminNotificationService notificationService,
+        ILogger<OrderController> logger)
     {
-        _orderService          = orderService          ?? throw new ArgumentNullException(nameof(orderService));
-        _shippingService       = shippingService       ?? throw new ArgumentNullException(nameof(shippingService));
-        _notificationService   = notificationService   ?? throw new ArgumentNullException(nameof(notificationService));
+        _orderService        = orderService        ?? throw new ArgumentNullException(nameof(orderService));
+        _shippingService     = shippingService     ?? throw new ArgumentNullException(nameof(shippingService));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _logger              = logger              ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpGet("admin/all")]
@@ -123,26 +127,36 @@ public class OrderController : _BaseController
 
             // Step 1 – add to SuperFrete cart
             var cartResponse = await _shippingService.AddOrderToCartAsync(order, dto.ServiceId, null, cancellationToken);
+            _logger.LogInformation("[Ship] Cart criado: superFreteOrderId={Id}", cartResponse.Id);
 
             await _orderService.UpdateOrderSuperFreteDataAsync(
                 id,
                 superFreteOrderId: cartResponse.Id,
                 cancellationToken: cancellationToken);
 
-            // Step 2 – checkout (deducts balance; tracking may already be present here)
+            // Step 2 – checkout (deducts balance; tracking code may already be returned here)
             var checkoutResponse = await _shippingService.CheckoutOrderAsync(cartResponse.Id, cancellationToken);
             var purchaseOrder    = checkoutResponse.Purchase?.Orders?.FirstOrDefault();
+            _logger.LogInformation("[Ship] Checkout: success={Ok} tracking={T} labelUrl={U}",
+                checkoutResponse.Success, purchaseOrder?.Tracking, purchaseOrder?.Print?.Url);
 
-            // Step 3 – print label (confirms the shipment and ensures tracking is generated)
+            // Step 3 – print/generate the label (some carriers only assign tracking after this)
             var printResponse = await _shippingService.PrintLabelAsync(cartResponse.Id, cancellationToken);
+            _logger.LogInformation("[Ship] Print: labelUrl={U}", printResponse.Url);
 
-            // Step 4 – fetch definitive order info (tracking code is always present here)
-            var orderInfo    = await _shippingService.GetOrderInfoAsync(cartResponse.Id, cancellationToken);
-            var trackingCode = orderInfo.Tracking
-                               ?? purchaseOrder?.Tracking
-                               ?? string.Empty;
-            var labelUrl     = printResponse.Url
-                               ?? purchaseOrder?.Print?.Url;
+            // Step 4 – fetch live order info as the definitive source for tracking code
+            var orderInfo = await _shippingService.GetOrderInfoAsync(cartResponse.Id, cancellationToken);
+            _logger.LogInformation("[Ship] OrderInfo: tracking={T} status={S}", orderInfo.Tracking, orderInfo.Status);
+
+            // Resolve tracking: orderInfo is most reliable; fall back to checkout value.
+            // Never persist an empty string — only save when we actually have a value.
+            var trackingCode = !string.IsNullOrWhiteSpace(orderInfo.Tracking)  ? orderInfo.Tracking
+                             : !string.IsNullOrWhiteSpace(purchaseOrder?.Tracking) ? purchaseOrder!.Tracking
+                             : null;
+
+            var labelUrl = !string.IsNullOrWhiteSpace(printResponse.Url)          ? printResponse.Url
+                         : !string.IsNullOrWhiteSpace(purchaseOrder?.Print?.Url)   ? purchaseOrder!.Print!.Url
+                         : null;
 
             await _orderService.UpdateOrderSuperFreteDataAsync(
                 id,
@@ -154,7 +168,7 @@ public class OrderController : _BaseController
             await _orderService.UpdateOrderStatusAsync(id, OrderStatus.SHIPPED, cancellationToken);
 
             // Step 6 – notify admin hub
-            await _notificationService.NotifyOrderShippedAsync(id, trackingCode, cancellationToken);
+            await _notificationService.NotifyOrderShippedAsync(id, trackingCode ?? string.Empty, cancellationToken);
 
             return Ok(new
             {
@@ -162,6 +176,132 @@ public class OrderController : _BaseController
                 trackingCode,
                 labelUrl
             });
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "[Ship] Erro ao processar envio do pedido {OrderId}", id);
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    /// <summary>
+    /// Returns the shipping details stored on the order (tracking code, label URL,
+    /// SuperFrete IDs) plus a live status refresh from SuperFrete when available.
+    /// Called by the admin to get full shipping info after the order has been shipped.
+    /// </summary>
+    [HttpGet("admin/{id}/shipping")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetShippingDetails(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var order = await _orderService.GetOrderByIdAsync(id, cancellationToken);
+            if (order is null)
+                return NotFound();
+
+            // If we have a SuperFrete order ID, fetch live data and keep local info in sync
+            if (!string.IsNullOrWhiteSpace(order.SuperFreteOrderId))
+            {
+                try
+                {
+                    var info = await _shippingService.GetOrderInfoAsync(order.SuperFreteOrderId, cancellationToken);
+
+                    // Sync tracking if SuperFrete now has it and we don't
+                    if (!string.IsNullOrWhiteSpace(info.Tracking) && string.IsNullOrWhiteSpace(order.TrackingCode))
+                    {
+                        await _orderService.UpdateOrderSuperFreteDataAsync(id, trackingCode: info.Tracking, cancellationToken: cancellationToken);
+                        order.TrackingCode = info.Tracking;
+                    }
+
+                    // Sync status: posted → SHIPPED, delivered → DELIVERED
+                    var liveStatus = info.Status switch
+                    {
+                        "posted"    => (OrderStatus?)OrderStatus.SHIPPED,
+                        "delivered" => OrderStatus.DELIVERED,
+                        _           => null
+                    };
+                    if (liveStatus.HasValue && order.Status != liveStatus.Value)
+                    {
+                        await _orderService.UpdateOrderStatusAsync(id, liveStatus.Value, cancellationToken);
+                        order.Status = liveStatus.Value;
+                    }
+
+                    return Ok(new
+                    {
+                        orderId           = order.Id,
+                        status            = order.Status,
+                        superFreteOrderId = order.SuperFreteOrderId,
+                        trackingCode      = order.TrackingCode,
+                        labelUrl          = order.SuperFreteLabelUrl,
+                        shippedAt         = order.ShippedAt,
+                        deliveredAt       = order.DeliveredAt,
+                        live = new
+                        {
+                            superFreteStatus = info.Status,
+                            trackingCode     = info.Tracking,
+                            carrier          = info.ServiceId,
+                            deliveryDays     = info.Delivery,
+                            deliveryMin      = info.DeliveryMin,
+                            deliveryMax      = info.DeliveryMax,
+                            postedAt         = info.PostedAt,
+                            generatedAt      = info.GeneratedAt
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "[Shipping] Não foi possível buscar info ao vivo do SuperFrete para o pedido {OrderId}", id);
+                }
+            }
+
+            // Fallback — return only what's stored locally
+            return Ok(new
+            {
+                orderId           = order.Id,
+                status            = order.Status,
+                superFreteOrderId = order.SuperFreteOrderId,
+                trackingCode      = order.TrackingCode,
+                labelUrl          = order.SuperFreteLabelUrl,
+                shippedAt         = order.ShippedAt,
+                deliveredAt       = order.DeliveredAt,
+                live              = (object?)null
+            });
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
+    /// <summary>
+    /// Proxies the SuperFrete shipping label PDF through the server, adding the
+    /// required Bearer token so the browser can open it directly without CORS/auth issues.
+    /// Returns the PDF as an inline attachment named "etiqueta-{orderId}.pdf".
+    /// </summary>
+    [HttpGet("admin/{id}/label")]
+    [AuthAttribute]
+    [AuthorizeAttribute(ProfileType.ADMIN)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DownloadLabel(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var order = await _orderService.GetOrderByIdAsync(id, cancellationToken);
+            if (order is null)
+                return NotFound();
+
+            if (string.IsNullOrWhiteSpace(order.SuperFreteLabelUrl))
+                return BadRequest(new { message = "Etiqueta ainda não gerada para este pedido." });
+
+            var (bytes, contentType) = await _shippingService.DownloadLabelAsync(order.SuperFreteLabelUrl, cancellationToken);
+
+            return File(bytes, contentType, $"etiqueta-{id[..8]}.pdf");
         }
         catch (Exception e)
         {
