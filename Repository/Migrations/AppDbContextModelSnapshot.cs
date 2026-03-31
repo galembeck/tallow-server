@@ -182,12 +182,6 @@ namespace Repository.Migrations
                     b.Property<DateTime?>("PaymentApprovedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("PreparingAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("ProcessingAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime?>("ShippedAt")
                         .HasColumnType("datetime2");
 
@@ -208,9 +202,6 @@ namespace Repository.Migrations
 
                     b.Property<string>("ShippingDeliveryTime")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ShippingLabelUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ShippingNeighborhood")
@@ -240,17 +231,11 @@ namespace Repository.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("SuperFreteOrderId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<decimal>("TotalAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("TrackingCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TrackingUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")

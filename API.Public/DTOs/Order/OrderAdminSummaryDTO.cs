@@ -24,15 +24,8 @@ public class OrderAdminSummaryDTO
     public string? ShippingCity { get; set; }
     public string? ShippingState { get; set; }
 
-    public string? TrackingCode { get; set; }
-    public string? TrackingUrl { get; set; }
-    public string? ShippingLabelUrl { get; set; }
-    public string? AdminNotes { get; set; }
-
     public DateTimeOffset DateCreated { get; set; }
     public DateTime? PaymentApprovedAt { get; set; }
-    public DateTime? ProcessingAt { get; set; }
-    public DateTime? PreparingAt { get; set; }
     public DateTime? ShippedAt { get; set; }
     public DateTime? DeliveredAt { get; set; }
     public DateTime? CancelledAt { get; set; }
@@ -56,15 +49,8 @@ public class OrderAdminSummaryDTO
         ShippingCity = order.ShippingCity,
         ShippingState = order.ShippingState,
 
-        TrackingCode = order.TrackingCode,
-        TrackingUrl = order.TrackingUrl,
-        ShippingLabelUrl = order.ShippingLabelUrl,
-        AdminNotes = order.AdminNotes,
-
         DateCreated = order.CreatedAt,
         PaymentApprovedAt = order.PaymentApprovedAt,
-        ProcessingAt = order.ProcessingAt,
-        PreparingAt = order.PreparingAt,
         ShippedAt = order.ShippedAt,
         DeliveredAt = order.DeliveredAt,
         CancelledAt = order.CancelledAt,

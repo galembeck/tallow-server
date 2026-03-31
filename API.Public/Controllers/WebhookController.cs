@@ -52,7 +52,7 @@ public class WebhookController : _BaseController
             {
                 if (payment.Status == PaymentStatus.APPROVED)
                 {
-                    await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.PROCESSING, cancellationToken);
+                    await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.PAYMENT_APPROVED, cancellationToken);
                 }
                 else if (payment.Status == PaymentStatus.REJECTED || payment.Status == PaymentStatus.CANCELLED)
                 {
