@@ -25,8 +25,6 @@ public class ShippingController(
     private readonly IOrderService _orderService = orderService
         ?? throw new ArgumentNullException(nameof(orderService));
 
-    // ── Public quote endpoints ────────────────────────────────────────────────
-
     [HttpPost("calculate")]
     [AllowAnonymous]
     public async Task<IActionResult> CalculateShipping([FromBody] ShippingQuoteRequestDTO body, CancellationToken cancellationToken = default)
@@ -162,8 +160,6 @@ public class ShippingController(
             throw;
         }
     }
-
-    // ── Admin: SuperFrete label lifecycle ─────────────────────────────────────
 
     /// <summary>
     /// Step 1 — Add the order to the SuperFrete cart (POST /api/v0/cart).
