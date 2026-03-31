@@ -1,4 +1,4 @@
-﻿using API.Public.Controllers._Base;
+using API.Public.Controllers._Base;
 using Domain.Data.Models;
 using Domain.Enumerators;
 using Domain.Services;
@@ -14,16 +14,19 @@ public class WebhookController : _BaseController
 {
     private readonly IPaymentService _paymentService;
     private readonly IOrderService _orderService;
+    private readonly IAdminNotificationService _notificationService;
     private readonly ILogger<WebhookController> _logger;
 
     public WebhookController(
         IPaymentService paymentService,
         IOrderService orderService,
+        IAdminNotificationService notificationService,
         ILogger<WebhookController> logger)
     {
-        _paymentService = paymentService ?? throw new ArgumentNullException(nameof(paymentService));
-        _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _paymentService      = paymentService      ?? throw new ArgumentNullException(nameof(paymentService));
+        _orderService        = orderService        ?? throw new ArgumentNullException(nameof(orderService));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _logger              = logger              ?? throw new ArgumentNullException(nameof(logger));
     }
 
     [HttpPost("mercadopago")]
@@ -47,16 +50,26 @@ public class WebhookController : _BaseController
 
             var payment = await _paymentService.UpdatePaymentStatusAsync(paymentId, cancellationToken);
 
-            // Atualizar status do pedido baseado no pagamento
             if (payment.OrderId != null)
             {
                 if (payment.Status == PaymentStatus.APPROVED)
                 {
                     await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.PAYMENT_APPROVED, cancellationToken);
+
+                    await _notificationService.NotifyPaymentApprovedAsync(
+                        payment.OrderId,
+                        paymentId.ToString(),
+                        payment.TransactionAmount,
+                        cancellationToken);
                 }
                 else if (payment.Status == PaymentStatus.REJECTED || payment.Status == PaymentStatus.CANCELLED)
                 {
                     await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.CANCELLED, cancellationToken);
+
+                    await _notificationService.NotifyPaymentDeclinedAsync(
+                        payment.OrderId,
+                        paymentId.ToString(),
+                        cancellationToken);
                 }
             }
 
