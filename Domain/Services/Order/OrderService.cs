@@ -107,4 +107,26 @@ public class OrderService(
                     order.CancelledAt = DateTime.UtcNow;
             });
     }
+
+    public async Task<Order> UpdateOrderSuperFreteDataAsync(
+        string orderId,
+        string? superFreteOrderId = null,
+        string? trackingCode = null,
+        string? labelUrl = null,
+        CancellationToken cancellationToken = default)
+    {
+        return await _orderRepository.UpdatePartialAsync(
+            new Order { Id = orderId },
+            order =>
+            {
+                if (superFreteOrderId is not null)
+                    order.SuperFreteOrderId = superFreteOrderId;
+
+                if (trackingCode is not null)
+                    order.TrackingCode = trackingCode;
+
+                if (labelUrl is not null)
+                    order.SuperFreteLabelUrl = labelUrl;
+            });
+    }
 }
