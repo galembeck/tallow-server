@@ -100,16 +100,17 @@ public class OrderController : _BaseController
     }
 
     /// <summary>
-    /// Runs the full SuperFrete shipping flow in one step:
+    /// Runs the SuperFrete shipping flow:
     ///   1. Adds the order to the SuperFrete cart
     ///   2. Checks out (deducts balance, assigns tracking code on most carriers)
-    ///   3. Prints the label (generates the PDF — required to confirm the tracking code)
-    ///   4. Fetches definitive order info (guarantees tracking code is populated)
-    ///   5. Persists superFreteOrderId, tracking code and label URL
-    ///   6. Sets order status to SHIPPED
-    ///   7. Broadcasts real-time notification to admin hub
+    ///   3. Prints the label (generates the PDF)
+    ///   4. Persists superFreteOrderId, tracking code and label URL
+    ///   5. Sets order status to SHIPPED
+    ///   6. Broadcasts real-time notification to admin hub
     ///
-    /// Called when the admin clicks "Marcar como Enviado".
+    /// Tracking code resolution is intentionally deferred to the polling
+    /// endpoint (GET /order/admin/{id}/shipping) so this endpoint responds
+    /// as fast as possible. The frontend polls every 6 s until the code arrives.
     /// </summary>
     [HttpPatch("admin/{id}/ship")]
     [AuthAttribute]
@@ -134,29 +135,22 @@ public class OrderController : _BaseController
                 superFreteOrderId: cartResponse.Id,
                 cancellationToken: cancellationToken);
 
-            // Step 2 – checkout (deducts balance; tracking code may already be returned here)
+            // Step 2 – checkout (deducts balance; tracking code is present here for most carriers)
             var checkoutResponse = await _shippingService.CheckoutOrderAsync(cartResponse.Id, cancellationToken);
             var purchaseOrder    = checkoutResponse.Purchase?.Orders?.FirstOrDefault();
             _logger.LogInformation("[Ship] Checkout: success={Ok} tracking={T} labelUrl={U}",
                 checkoutResponse.Success, purchaseOrder?.Tracking, purchaseOrder?.Print?.Url);
 
-            // Step 3 – print/generate the label (some carriers only assign tracking after this)
+            // Step 3 – print/generate the label PDF
             var printResponse = await _shippingService.PrintLabelAsync(cartResponse.Id, cancellationToken);
             _logger.LogInformation("[Ship] Print: labelUrl={U}", printResponse.Url);
 
-            // Step 4 – fetch live order info as the definitive source for tracking code
-            var orderInfo = await _shippingService.GetOrderInfoAsync(cartResponse.Id, cancellationToken);
-            _logger.LogInformation("[Ship] OrderInfo: tracking={T} status={S}", orderInfo.Tracking, orderInfo.Status);
-
-            // Resolve tracking: orderInfo is most reliable; fall back to checkout value.
-            // Never persist an empty string — only save when we actually have a value.
-            var trackingCode = !string.IsNullOrWhiteSpace(orderInfo.Tracking)  ? orderInfo.Tracking
-                             : !string.IsNullOrWhiteSpace(purchaseOrder?.Tracking) ? purchaseOrder!.Tracking
+            // Persist whatever we have now. If tracking is still null after checkout + print,
+            // GET /order/admin/{id}/shipping will pick it up via its live SuperFrete refresh.
+            var trackingCode = !string.IsNullOrWhiteSpace(purchaseOrder?.Tracking) ? purchaseOrder!.Tracking : null;
+            var labelUrl     = !string.IsNullOrWhiteSpace(printResponse.Url)       ? printResponse.Url
+                             : !string.IsNullOrWhiteSpace(purchaseOrder?.Print?.Url) ? purchaseOrder!.Print!.Url
                              : null;
-
-            var labelUrl = !string.IsNullOrWhiteSpace(printResponse.Url)          ? printResponse.Url
-                         : !string.IsNullOrWhiteSpace(purchaseOrder?.Print?.Url)   ? purchaseOrder!.Print!.Url
-                         : null;
 
             await _orderService.UpdateOrderSuperFreteDataAsync(
                 id,
@@ -164,10 +158,10 @@ public class OrderController : _BaseController
                 labelUrl:     labelUrl,
                 cancellationToken: cancellationToken);
 
-            // Step 5 – set status to SHIPPED
+            // Step 4 – set status to SHIPPED
             await _orderService.UpdateOrderStatusAsync(id, OrderStatus.SHIPPED, cancellationToken);
 
-            // Step 6 – notify admin hub
+            // Step 5 – notify admin hub
             await _notificationService.NotifyOrderShippedAsync(id, trackingCode ?? string.Empty, cancellationToken);
 
             return Ok(new
