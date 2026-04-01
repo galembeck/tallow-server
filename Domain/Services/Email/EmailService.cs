@@ -34,7 +34,7 @@ public class EmailService(IResend resend) : IEmailService
         var message = new EmailMessage
         {
             From = From,
-            Subject = $"Recebemos seu pedido: #{shortId}"
+            Subject = $"Pedido #{shortId} recebido com sucesso!"
         };
         message.To.Add(data.BuyerEmail);
         message.HtmlBody = BuildOrderCreatedTemplate(data);
@@ -95,10 +95,6 @@ public class EmailService(IResend resend) : IEmailService
         await _resend.EmailSendAsync(message);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  SHARED LAYOUT HELPERS
-    // ─────────────────────────────────────────────────────────────────────────
-
     private static string WrapLayout(string preheader, string bodyContent) => $"""
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -109,7 +105,6 @@ public class EmailService(IResend resend) : IEmailService
         </head>
         <body style="margin:0;padding:0;background:#f5f0eb;font-family:'Segoe UI',Helvetica,Arial,sans-serif;color:#2c2825;">
 
-          <!-- preheader hidden -->
           <div style="display:none;font-size:1px;color:#f5f0eb;line-height:1px;max-height:0;overflow:hidden;mso-hide:all;">{preheader}</div>
 
           <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f0eb;">
@@ -129,7 +124,6 @@ public class EmailService(IResend resend) : IEmailService
         """;
 
     private static string TopBar() => """
-        <!-- TOP BAR: company name + contact -->
         <tr>
           <td style="padding-bottom:16px;">
             <table width="100%" cellpadding="0" cellspacing="0">
@@ -148,7 +142,6 @@ public class EmailService(IResend resend) : IEmailService
         """;
 
     private static string Footer() => """
-        <!-- FOOTER -->
         <tr>
           <td>
             <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:0 0 8px 8px;overflow:hidden;">
@@ -164,10 +157,6 @@ public class EmailService(IResend resend) : IEmailService
           </td>
         </tr>
         """;
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  ORDER CREATED TEMPLATE  (the main one)
-    // ─────────────────────────────────────────────────────────────────────────
 
     private static string BuildOrderCreatedTemplate(OrderCreatedEmailData d)
     {
@@ -186,7 +175,6 @@ public class EmailService(IResend resend) : IEmailService
             <tr>
               <td style="background:#ffffff;border-radius:8px 8px 0 0;overflow:hidden;">
 
-                <!-- ── ORDER CONFIRMATION BANNER ── -->
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="background:#2c2825;padding:22px 32px;">
@@ -213,7 +201,6 @@ public class EmailService(IResend resend) : IEmailService
                   </tr>
                 </table>
 
-                <!-- ── GREETING ── -->
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding:28px 32px 8px;">
@@ -225,13 +212,11 @@ public class EmailService(IResend resend) : IEmailService
                   </tr>
                 </table>
 
-                <!-- ── PROGRESS STAGES ── -->
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding:20px 32px;">
                       <table width="100%" cellpadding="0" cellspacing="0">
                         <tr>
-                          <!-- Stage 1: ACTIVE -->
                           <td width="32%" style="text-align:center;vertical-align:top;">
                             <table width="100%" cellpadding="0" cellspacing="0">
                               <tr>
@@ -242,7 +227,6 @@ public class EmailService(IResend resend) : IEmailService
                               </tr>
                             </table>
                           </td>
-                          <!-- Arrow -->
                           <td width="2%" style="text-align:center;vertical-align:middle;font-size:16px;color:#c8a97e;padding:0 2px;">&#8250;</td>
                           <!-- Stage 2: inactive -->
                           <td width="32%" style="text-align:center;vertical-align:top;">
@@ -255,7 +239,6 @@ public class EmailService(IResend resend) : IEmailService
                               </tr>
                             </table>
                           </td>
-                          <!-- Arrow -->
                           <td width="2%" style="text-align:center;vertical-align:middle;font-size:16px;color:#c8a97e;padding:0 2px;">&#8250;</td>
                           <!-- Stage 3: inactive -->
                           <td width="32%" style="text-align:center;vertical-align:top;">
@@ -276,18 +259,15 @@ public class EmailService(IResend resend) : IEmailService
 
                 {deliveryAlert}
 
-                <!-- DIVIDER -->
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr><td style="padding:0 32px;"><hr style="border:none;border-top:1px solid #ede8e2;margin:0;" /></td></tr>
                 </table>
 
-                <!-- ── PRODUCT TABLE ── -->
                 <table width="100%" cellpadding="0" cellspacing="0" style="padding:0 32px;">
                   <tr>
                     <td style="padding:0 32px;">
                       <table width="100%" cellpadding="0" cellspacing="0">
 
-                        <!-- Table header -->
                         <tr style="border-bottom:1px solid #ede8e2;">
                           <td style="padding:12px 0 10px;font-size:13px;font-weight:600;color:#8a7b72;border-bottom:2px solid #ede8e2;">Produto</td>
                           <td style="padding:12px 8px 10px;font-size:13px;font-weight:600;color:#8a7b72;text-align:center;width:50px;border-bottom:2px solid #ede8e2;">Qtd.</td>
@@ -303,12 +283,10 @@ public class EmailService(IResend resend) : IEmailService
                   </tr>
                 </table>
 
-                <!-- SPACER -->
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr><td style="height:8px;"></td></tr>
                 </table>
 
-                <!-- ── DELIVERY ADDRESS ── -->
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding:0 32px 16px;">
@@ -337,7 +315,6 @@ public class EmailService(IResend resend) : IEmailService
                   </tr>
                 </table>
 
-                <!-- ── PAYMENT STATUS ── -->
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding:0 32px 32px;">
@@ -387,7 +364,6 @@ public class EmailService(IResend resend) : IEmailService
                 : string.Empty;
 
             sb.Append($"""
-                <!-- Item row -->
                 <tr>
                   <td style="padding:14px 0;border-bottom:1px solid #f0ebe5;vertical-align:top;">
                     <table cellpadding="0" cellspacing="0">
@@ -418,7 +394,6 @@ public class EmailService(IResend resend) : IEmailService
             : $"Frete ({shippingService})";
 
         return $"""
-            <!-- Subtotal -->
             <tr>
               <td colspan="2" style="padding:10px 0 4px;text-align:right;font-size:13px;color:#5a4f47;"></td>
               <td></td>
@@ -444,7 +419,6 @@ public class EmailService(IResend resend) : IEmailService
             return string.Empty;
 
         return $"""
-            <!-- DELIVERY ALERT -->
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td style="padding:0 32px 20px;">
@@ -461,10 +435,6 @@ public class EmailService(IResend resend) : IEmailService
             </table>
             """;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  OTHER TEMPLATES
-    // ─────────────────────────────────────────────────────────────────────────
 
     private static string BuildWelcomeTemplate(string name)
     {
@@ -483,7 +453,6 @@ public class EmailService(IResend resend) : IEmailService
                     </td>
                   </tr>
                 </table>
-                <!-- Content -->
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td style="padding:36px 40px;">
