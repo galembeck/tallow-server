@@ -35,7 +35,7 @@ public class EmailService(IResend resend) : IEmailService
         var message = new EmailMessage
         {
             From = From,
-            Subject = $"Pedido #{orderId[..8].ToUpper()} recebido com sucesso!"
+            Subject = $"Pedido #{orderId[..8].ToUpper()} realizado com sucesso!"
         };
         message.To.Add(recipientEmail);
         message.HtmlBody = BuildOrderCreatedTemplate(recipientName, orderId, totalAmount, shippingCity, shippingState, itemsCount);
@@ -53,7 +53,7 @@ public class EmailService(IResend resend) : IEmailService
         var message = new EmailMessage
         {
             From = From,
-            Subject = $"Pagamento confirmado — Pedido #{orderId[..8].ToUpper()}"
+            Subject = $"Confirmação de pagamento — Pedido #{orderId[..8].ToUpper()}"
         };
         message.To.Add(recipientEmail);
         message.HtmlBody = BuildPaymentApprovedTemplate(recipientName, orderId, totalAmount, paymentMethod);
@@ -88,7 +88,7 @@ public class EmailService(IResend resend) : IEmailService
         var message = new EmailMessage
         {
             From = From,
-            Subject = $"Pedido #{orderId[..8].ToUpper()} enviado! Rastreie agora"
+            Subject = $"Seu pedido #{orderId[..8].ToUpper()} foi enviado!"
         };
         message.To.Add(recipientEmail);
         message.HtmlBody = BuildOrderShippedTemplate(recipientName, orderId, trackingCode, shippingService);
@@ -148,7 +148,19 @@ public class EmailService(IResend resend) : IEmailService
                 {content}
               </div>
               <div class="footer">
-                <p>Terra &amp; Tallow &mdash; São Caetano do Sul, SP</p>
+                <p>Terra &amp; Tallow</p>
+                
+                <br />
+
+                <p>Alameda Conde de Porto Alegre &mdash; Santa Maria,
+                <p>São Caetano do Sul &mdash; SP, 09561000</p>
+
+                <br />
+
+                <p>Telefone: (XX) XXXXX-XXXX &mdash; WhatsApp: (XX) XXXXX-XXXX</p>
+
+                <br />
+
                 <p>Você está recebendo este e-mail porque realizou uma ação em nossa loja.</p>
               </div>
             </div>
@@ -193,8 +205,9 @@ public class EmailService(IResend resend) : IEmailService
     {
         var shortId = orderId[..8].ToUpper();
         var productsLabel = itemsCount == 1 ? "produto" : "produtos";
+
         var content = $"""
-            <p class="greeting">Pedido recebido! 🎉</p>
+            <p class="greeting">Pedido realizado! 🎉</p>
             <p class="text">
               Olá, <strong>{name}</strong>! Seu pedido foi registrado com sucesso e está aguardando confirmação de pagamento.
             </p>

@@ -25,7 +25,7 @@ public class AdminNotificationService : IAdminNotificationService
             Type     = "ORDER_CREATED",
             Category = "ORDER",
             OrderId  = orderId,
-            Message  = $"Novo pedido de {buyerName} - R$ {totalAmount:F2}",
+            Message  = $"<strong>PEDIDO RECEBIDO</strong> | Cliente: {buyerName} - R${totalAmount:F2}",
             Data     = new { orderId, buyerName, totalAmount }
         };
 
@@ -39,7 +39,7 @@ public class AdminNotificationService : IAdminNotificationService
             Type     = "PAYMENT_APPROVED",
             Category = "PAYMENT",
             OrderId  = orderId,
-            Message  = $"Pagamento aprovado - Pedido #{orderId[..8].ToUpper()} - R$ {amount:F2}",
+            Message  = $"<strong>PAGAMENTO APROVADO</strong> | Pedido: #{orderId[..8].ToUpper()} - R$ {amount:F2}",
             Data     = new { orderId, paymentId, amount }
         };
 
@@ -53,7 +53,7 @@ public class AdminNotificationService : IAdminNotificationService
             Type     = "PAYMENT_DECLINED",
             Category = "PAYMENT",
             OrderId  = orderId,
-            Message  = $"Pagamento recusado - Pedido #{orderId[..8].ToUpper()}",
+            Message  = $"<strong>PAGAMENTO RECUSADO</strong> | Pedido: #{orderId[..8].ToUpper()}",
             Data     = new { orderId, paymentId }
         };
 
@@ -67,7 +67,7 @@ public class AdminNotificationService : IAdminNotificationService
             Type     = "ORDER_SHIPPED",
             Category = "SHIPPING",
             OrderId  = orderId,
-            Message  = $"Pedido #{orderId[..8].ToUpper()} enviado - Rastreio: {trackingCode}",
+            Message  = $"<strong>PEDIDO ENVIADO</strong> | Pedido: #{orderId[..8].ToUpper()}",
             Data     = new { orderId, trackingCode }
         };
 
