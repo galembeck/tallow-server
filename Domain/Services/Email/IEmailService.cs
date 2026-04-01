@@ -1,17 +1,12 @@
+using Domain.Data.Models.Email;
+
 namespace Domain.Services;
 
 public interface IEmailService
 {
     Task SendWelcomeEmailAsync(string recipientName, string recipientEmail);
 
-    Task SendOrderCreatedEmailAsync(
-        string recipientName,
-        string recipientEmail,
-        string orderId,
-        decimal totalAmount,
-        string shippingCity,
-        string shippingState,
-        int itemsCount);
+    Task SendOrderCreatedEmailAsync(OrderCreatedEmailData data);
 
     Task SendPaymentApprovedEmailAsync(
         string recipientName,

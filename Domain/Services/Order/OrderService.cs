@@ -1,6 +1,7 @@
 ﻿using Domain.Constants;
 using Domain.Data.Entities;
 using Domain.Data.Models;
+using Domain.Data.Models.Email;
 using Domain.Enumerators;
 using Domain.Exceptions;
 using Domain.Repository;
@@ -71,15 +72,36 @@ public class OrderService(
 
         await _orderRepository.InsertAsync(order);
 
-        _backgroundJobClient.Enqueue<IEmailService>(s =>
-            s.SendOrderCreatedEmailAsync(
-                order.BuyerName,
-                order.BuyerEmail,
-                order.Id,
-                order.TotalAmount,
-                order.ShippingCity,
-                order.ShippingState,
-                order.Items.Count));
+        var emailData = new OrderCreatedEmailData
+        {
+            OrderId             = order.Id,
+            OrderDate           = order.CreatedAt.UtcDateTime,
+            BuyerName           = order.BuyerName,
+            BuyerEmail          = order.BuyerEmail,
+            SubTotalAmount      = order.SubTotalAmount,
+            ShippingAmount      = order.ShippingAmount,
+            TotalAmount         = order.TotalAmount,
+            ShippingService     = order.ShippingService,
+            ShippingDeliveryTime = order.ShippingDeliveryTime,
+            ShippingZipcode     = order.ShippingZipcode,
+            ShippingAddress     = order.ShippingAddress,
+            ShippingNumber      = order.ShippingNumber,
+            ShippingComplement  = order.ShippingComplement,
+            ShippingNeighborhood = order.ShippingNeighborhood,
+            ShippingCity        = order.ShippingCity,
+            ShippingState       = order.ShippingState,
+            Items               = order.Items.Select(i => new OrderItemEmailData
+            {
+                ProductId      = i.ProductId,
+                ProductName    = i.ProductName,
+                ProductImageUrl = i.ProductImageUrl,
+                UnitPrice      = i.UnitPrice,
+                Quantity       = i.Quantity,
+                SubTotal       = i.SubTotal
+            }).ToList()
+        };
+
+        _backgroundJobClient.Enqueue<IEmailService>(s => s.SendOrderCreatedEmailAsync(emailData));
 
         return order;
     }
