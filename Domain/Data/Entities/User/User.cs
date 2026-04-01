@@ -34,7 +34,7 @@ public class User : BaseEntity, IBaseEntity<User>
 
 
 
-    public string PasswordChangeToken { get; set; } = string.Empty;
+    public string? PasswordChangeToken { get; set; }
     public DateTimeOffset? PasswordChangeTokenExpiresAt { get; set; }
 
 

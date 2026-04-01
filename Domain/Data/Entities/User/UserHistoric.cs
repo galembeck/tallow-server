@@ -38,7 +38,7 @@ public class UserHistoric : BaseEntity, IBaseEntity<UserHistoric>
 
 
     public DateTimeOffset? LastAccessAt { get; set; }
-    public string PasswordChangeToken { get; set; }
+    public string? PasswordChangeToken { get; set; }
     public DateTimeOffset? PasswordChangeTokenExpiresAt { get; set; }
 
     [NotMapped]
