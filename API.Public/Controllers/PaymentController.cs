@@ -4,6 +4,7 @@ using API.Public.Filters;
 using Domain.Data.Models;
 using Domain.Enumerators;
 using Domain.Services;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Public.Controllers;
@@ -14,13 +15,16 @@ public class PaymentController : _BaseController
 {
     private readonly IPaymentService _paymentService;
     private readonly IOrderService _orderService;
+    private readonly IBackgroundJobClient _backgroundJobClient;
 
     public PaymentController(
         IPaymentService paymentService,
-        IOrderService orderService)
+        IOrderService orderService,
+        IBackgroundJobClient backgroundJobClient)
     {
         _paymentService = paymentService ?? throw new ArgumentNullException(nameof(paymentService));
         _orderService = orderService ?? throw new ArgumentNullException(nameof(orderService));
+        _backgroundJobClient = backgroundJobClient ?? throw new ArgumentNullException(nameof(backgroundJobClient));
     }
 
     [HttpPost("process")]
@@ -203,6 +207,14 @@ public class PaymentController : _BaseController
             if (payment.Status == PaymentStatus.APPROVED)
             {
                 await _orderService.UpdateOrderStatusAsync(dto.OrderId, OrderStatus.PAYMENT_APPROVED, cancellationToken);
+
+                _backgroundJobClient.Enqueue<IEmailService>(s =>
+                    s.SendPaymentApprovedEmailAsync(
+                        order.BuyerName,
+                        order.BuyerEmail,
+                        order.Id,
+                        payment.TransactionAmount,
+                        dto.PaymentType.ToString()));
             }
             else if (payment.Status == PaymentStatus.PENDING || payment.Status == PaymentStatus.IN_PROCESS)
             {

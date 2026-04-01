@@ -98,6 +98,12 @@ public static class NativeInjector
 
         #endregion .: PAYMENT :.
 
+        #region .: EMAIL :.
+
+        services.AddScoped<IEmailService, EmailService>();
+
+        #endregion .: EMAIL :.
+
         #endregion .: INTERNAL INJECTIONS :.
     }
 }
