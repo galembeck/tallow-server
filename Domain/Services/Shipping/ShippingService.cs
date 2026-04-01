@@ -434,10 +434,9 @@ public class ShippingService : IShippingService
     {
         try
         {
-            // The label URL is a standalone signed URL (Google Cloud Functions).
-            // It must NOT receive the SuperFrete Bearer token — use a plain client.
-            var client = _httpClientFactory.CreateClient();
-            var response = await client.GetAsync(labelUrl, cancellationToken);
+            // The label URL is a SuperFrete-issued URL; download it with the
+            // same authenticated client used for all SuperFrete calls.
+            var response = await _httpClient.GetAsync(labelUrl, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {

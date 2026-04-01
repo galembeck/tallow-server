@@ -290,12 +290,21 @@ public class OrderController : _BaseController
             if (order is null)
                 return NotFound();
 
-            if (string.IsNullOrWhiteSpace(order.SuperFreteLabelUrl))
-                return BadRequest(new { message = "Etiqueta ainda não gerada para este pedido." });
+            if (string.IsNullOrWhiteSpace(order.SuperFreteOrderId))
+                return BadRequest(new { message = "Pedido ainda não foi enviado pelo SuperFrete." });
 
-            var (bytes, contentType) = await _shippingService.DownloadLabelAsync(order.SuperFreteLabelUrl, cancellationToken);
+            // Always request a fresh print URL — the stored label URL is short-lived
+            // and will return 500 if accessed after expiry.
+            var printResponse = await _shippingService.PrintLabelAsync(order.SuperFreteOrderId, cancellationToken);
 
-            return File(bytes, contentType, $"etiqueta-{id[..8]}.pdf");
+            if (string.IsNullOrWhiteSpace(printResponse.Url))
+                return BadRequest(new { message = "Etiqueta ainda não disponível no SuperFrete." });
+
+            var (bytes, contentType) = await _shippingService.DownloadLabelAsync(printResponse.Url, cancellationToken);
+
+            // Return inline so the browser renders the PDF in the new tab
+            Response.Headers["Content-Disposition"] = "inline";
+            return File(bytes, contentType);
         }
         catch (Exception e)
         {
