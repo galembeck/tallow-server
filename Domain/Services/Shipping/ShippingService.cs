@@ -13,6 +13,7 @@ namespace Domain.Services;
 public class ShippingService : IShippingService
 {
     private readonly HttpClient _httpClient;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<ShippingService> _logger;
 
     private readonly string _apiToken;
@@ -31,6 +32,7 @@ public class ShippingService : IShippingService
 
     public ShippingService(IHttpClientFactory httpClientFactory, ILogger<ShippingService> logger)
     {
+        _httpClientFactory = httpClientFactory;
         _logger = logger;
         _apiToken = Constant.Settings.ShippingServiceSettings.ServiceAPIKey;
         _fromZipCode = Constant.Settings.ShippingServiceSettings.ShippingPostalCode;
@@ -432,20 +434,27 @@ public class ShippingService : IShippingService
     {
         try
         {
-            // Use an absolute URI — HttpClient will still send the Authorization header
-            // that was configured at construction time, which SuperFrete requires.
-            var response = await _httpClient.GetAsync(labelUrl, cancellationToken);
+            // The label URL is a standalone signed URL (Google Cloud Functions).
+            // It must NOT receive the SuperFrete Bearer token — use a plain client.
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.GetAsync(labelUrl, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogError("[Label] Download failed: status={Status} url={Url} body={Body}",
+                    (int)response.StatusCode, labelUrl, body);
                 throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
+            }
 
             var bytes       = await response.Content.ReadAsByteArrayAsync(cancellationToken);
             var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/pdf";
 
             return (bytes, contentType);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex)
         {
+            _logger.LogError(ex, "[Label] HTTP request exception for url={Url}", labelUrl);
             throw new BusinessException(BusinessErrorMessage.SOMETHING_WENT_WRONG);
         }
         catch (Exception)
