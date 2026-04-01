@@ -144,22 +144,29 @@ public class OrderService(
 
         if (newStatus == OrderStatus.PROCESSING)
         {
-            _backgroundJobClient.Enqueue<IEmailService>(s =>
-                s.SendOrderInPreparationEmailAsync(
-                    updated.BuyerName,
-                    updated.BuyerEmail,
-                    updated.Id,
-                    updated.ShippingDeliveryTime));
+            // Fetch the full order so BuyerName/Email and ShippingDeliveryTime are populated
+            var full = await _orderRepository.GetAsync(orderId, cancellationToken);
+            if (full != null)
+                _backgroundJobClient.Enqueue<IEmailService>(s =>
+                    s.SendOrderInPreparationEmailAsync(
+                        full.BuyerName,
+                        full.BuyerEmail,
+                        full.Id,
+                        full.ShippingDeliveryTime));
         }
-        else if (newStatus == OrderStatus.SHIPPED && !string.IsNullOrWhiteSpace(updated.TrackingCode))
+        else if (newStatus == OrderStatus.SHIPPED)
         {
-            _backgroundJobClient.Enqueue<IEmailService>(s =>
-                s.SendOrderShippedEmailAsync(
-                    updated.BuyerName,
-                    updated.BuyerEmail,
-                    updated.Id,
-                    updated.TrackingCode!,
-                    updated.ShippingService ?? "Correios"));
+            // UpdatePartialAsync only returns the patched fields; fetch the full row
+            // (tracking code was persisted in a prior UpdateOrderSuperFreteDataAsync call)
+            var full = await _orderRepository.GetAsync(orderId, cancellationToken);
+            if (full != null && !string.IsNullOrWhiteSpace(full.TrackingCode))
+                _backgroundJobClient.Enqueue<IEmailService>(s =>
+                    s.SendOrderShippedEmailAsync(
+                        full.BuyerName,
+                        full.BuyerEmail,
+                        full.Id,
+                        full.TrackingCode!,
+                        full.ShippingService ?? "Correios"));
         }
 
         return updated;

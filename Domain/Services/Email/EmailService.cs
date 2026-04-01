@@ -77,6 +77,23 @@ public class EmailService(IResend resend) : IEmailService
         await _resend.EmailSendAsync(message);
     }
 
+    public async Task SendPasswordRecoveryEmailAsync(
+        string recipientName,
+        string recipientEmail,
+        string token,
+        DateTime expiresAt)
+    {
+        var message = new EmailMessage
+        {
+            From    = From,
+            Subject = "Código de recuperação de senha — Terra & Tallow"
+        };
+        message.To.Add(recipientEmail);
+        message.HtmlBody = BuildPasswordRecoveryTemplate(recipientName, token, expiresAt);
+
+        await _resend.EmailSendAsync(message);
+    }
+
     public async Task SendOrderShippedEmailAsync(
         string recipientName,
         string recipientEmail,
@@ -692,6 +709,68 @@ public class EmailService(IResend resend) : IEmailService
 
         return WrapLayout(
             $"Seu pedido #{shortId} foi enviado! Rastreie com o código {trackingCode}.",
+            body);
+    }
+
+    private static string BuildPasswordRecoveryTemplate(string name, string token, DateTime expiresAt)
+    {
+        var expiry = expiresAt.ToString("HH:mm 'de' dd/MM/yyyy");
+
+        var body = $"""
+            {TopBar()}
+            <tr>
+              <td style="background:#ffffff;border-radius:8px 8px 0 0;">
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="background:#2c2825;padding:22px 32px;">
+                      <span style="font-size:20px;vertical-align:middle;">&#128274;</span>
+                      <span style="font-size:16px;color:#f5ebe0;vertical-align:middle;">&nbsp;Recupera&#231;&#227;o de senha</span>
+                    </td>
+                  </tr>
+                </table>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td style="padding:32px 40px;">
+                      <p style="margin:0 0 8px;font-size:15px;color:#2c2825;">Ol&#225;, <strong>{name}</strong>!</p>
+                      <p style="margin:0 0 24px;font-size:14px;line-height:1.7;color:#5a4f47;">
+                        Recebemos uma solicita&#231;&#227;o para redefinir a senha da sua conta.
+                        Use o c&#243;digo abaixo para continuar. Ele &#233; v&#225;lido por <strong>{Constant.Settings.AuthSettings.RecoveryPasswordExpiration} minutos</strong>.
+                      </p>
+
+                      <!-- OTP Token box -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                        <tr>
+                          <td style="background:#faf7f4;border:2px dashed #c8a97e;border-radius:10px;padding:28px;text-align:center;">
+                            <p style="margin:0 0 6px;font-size:11px;color:#a0908a;letter-spacing:3px;text-transform:uppercase;">Seu c&#243;digo</p>
+                            <p style="margin:0;font-size:36px;font-weight:700;color:#2c2825;letter-spacing:10px;">{token}</p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Expiry alert -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
+                        <tr>
+                          <td style="background:#fdf6ec;border:1px solid #e8c99a;border-radius:6px;padding:12px 16px;font-size:13px;color:#7a5c2e;line-height:1.6;">
+                            &#9888;&#65039; Este c&#243;digo expira em <strong>{expiry}</strong>.
+                            N&#227;o compartilhe com ningu&#233;m.
+                          </td>
+                        </tr>
+                      </table>
+
+                      <p style="margin:0;font-size:13px;color:#a0908a;line-height:1.6;">
+                        Se voc&#234; n&#227;o solicitou a recupera&#231;&#227;o de senha, ignore este e-mail.
+                        Sua senha permanece a mesma.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            {Footer()}
+            """;
+
+        return WrapLayout(
+            "Seu código de recuperação de senha Terra & Tallow está disponível.",
             body);
     }
 }

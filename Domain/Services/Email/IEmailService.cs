@@ -27,4 +27,10 @@ public interface IEmailService
         string orderId,
         string trackingCode,
         string shippingService);
+
+    Task SendPasswordRecoveryEmailAsync(
+        string recipientName,
+        string recipientEmail,
+        string token,
+        DateTime expiresAt);
 }

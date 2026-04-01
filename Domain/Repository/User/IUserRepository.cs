@@ -21,6 +21,7 @@ public interface IUserRepository : IRepository<UserEntity>
     //Task<List<ClientLogins>> GetAllClientsLoginsCSVAsync(ClientLoginsSearchParameter sp, CancellationToken cancellationToken = default);
 
     Task<UserEntity> GetByDocumentAndTokenAsync(string document, string changeToken, CancellationToken cancellationToken = default);
+    Task<UserEntity> GetByEmailAndTokenAsync(string email, string changeToken, CancellationToken cancellationToken = default);
 
     //Task<PagedResult<User>> GetUserPaginate(IQueryable<User> query, int page, int pageSize, bool isDesc, string orderBy, bool isOrdered, CancellationToken cancellationToken = default);
 

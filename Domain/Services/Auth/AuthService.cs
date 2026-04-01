@@ -7,6 +7,7 @@ using Domain.Exceptions;
 using Domain.Repository;
 using Domain.Repository.User;
 using Domain.Utils;
+using Hangfire;
 
 namespace Domain.Services;
 
@@ -16,6 +17,7 @@ public class AuthService : IAuthService
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IUserSecurityInfoRepository _userSecurityInfoRepository;
+    private readonly IBackgroundJobClient _backgroundJobClient;
 
     private readonly IUserService _userService;
 
@@ -24,13 +26,14 @@ public class AuthService : IAuthService
         IAccessTokenRepository accessTokenRepository,
         IRefreshTokenRepository refreshTokenRepository,
         IUserSecurityInfoRepository userSecurityInfoRepository,
-
+        IBackgroundJobClient backgroundJobClient,
         IUserService userService)
     {
         _userRepository = userRepository;
         _accessTokenRepository = accessTokenRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _userSecurityInfoRepository = userSecurityInfoRepository;
+        _backgroundJobClient = backgroundJobClient;
 
         _userService = userService;
     }
@@ -42,9 +45,7 @@ public class AuthService : IAuthService
         if (user is null)
             throw new BusinessException(BusinessErrorMessage.USER_NOT_FOUND);
 
-        user = await _userRepository.GetByDocumentPasswordAsync(user.Document, StringUtil.SHA512(password));
-
-        if (user is null)
+        if (user.Password != StringUtil.SHA512(password))
             throw new BusinessException(BusinessErrorMessage.USER_NOT_FOUND_OR_INVALID_PASSWORD);
 
         var response = await GenerateTokensAsync(user.Id);
@@ -346,6 +347,56 @@ public class AuthService : IAuthService
     //}
 
 
+
+    #region .: PASSWORD RECOVERY :.
+
+    public async Task SendPasswordRecoveryAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByEmailAsync(email);
+
+        // Always succeed silently to prevent e-mail enumeration
+        if (user is null)
+            return;
+
+        var token     = StringUtil.GenerateRandom(Constant.Settings.AuthSettings.RecoveryPasswordLength).ToUpper();
+        var expiresAt = DateTimeOffset.UtcNow.AddMinutes(Constant.Settings.AuthSettings.RecoveryPasswordExpiration);
+
+        await _userRepository.UpdatePartialAsync(
+            new User { Id = user.Id },
+            u =>
+            {
+                u.PasswordChangeToken          = token;
+                u.PasswordChangeTokenExpiresAt = expiresAt;
+            });
+
+        _backgroundJobClient.Enqueue<IEmailService>(s =>
+            s.SendPasswordRecoveryEmailAsync(user.Name, user.Email, token, expiresAt.UtcDateTime));
+    }
+
+    public async Task<bool> VerifyPasswordRecoveryTokenAsync(string email, string token, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByEmailAndTokenAsync(email, token, cancellationToken);
+        return user is not null;
+    }
+
+    public async Task ResetPasswordAsync(string email, string token, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByEmailAndTokenAsync(email, token, cancellationToken);
+
+        if (user is null)
+            throw new BusinessException(BusinessErrorMessage.INVALID_DOCUMENT_OR_RECOVERY_PASSWORD_TOKEN);
+
+        await _userRepository.UpdatePartialAsync(
+            new User { Id = user.Id },
+            u =>
+            {
+                u.Password                     = StringUtil.SHA512(newPassword);
+                u.PasswordChangeToken          = null;
+                u.PasswordChangeTokenExpiresAt = null;
+            });
+    }
+
+    #endregion .: PASSWORD RECOVERY :.
 
     #region .: PRIVATE METHODS :.
 

@@ -12,9 +12,9 @@ public interface IAuthService
 
     Task<Tokens> RevokeAccessTokenAsync(string accessTokenId, string refreshTokenId, User actor);
 
-    //Task SendPasswordRecoveryAsync(SendTo? sendTo, string document);
-
-    //Task RecoverPasswordAsync(string document, string changeToken, string password);
+    Task SendPasswordRecoveryAsync(string email, CancellationToken cancellationToken = default);
+    Task<bool> VerifyPasswordRecoveryTokenAsync(string email, string token, CancellationToken cancellationToken = default);
+    Task ResetPasswordAsync(string email, string token, string newPassword, CancellationToken cancellationToken = default);
 
     //Task<List<User>> ValidateGoogleTokenAsync(string idToken, CancellationToken cancellationToken = default);
 

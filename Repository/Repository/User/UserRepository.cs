@@ -183,6 +183,28 @@ public class UserRepository : BaseRepository<UserEntity>, IUserRepository
         return response;
     }
 
+    public async Task<UserEntity> GetByEmailAndTokenAsync(string email, string changeToken, CancellationToken cancellationToken = default)
+    {
+        UserEntity response;
+
+        try
+        {
+            response = await _entity
+                .Where(x => x.Email == email
+                    && x.PasswordChangeToken == changeToken
+                    && x.PasswordChangeTokenExpiresAt > DateTimeOffset.UtcNow
+                    && x.DeletedAt == null)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+        catch (System.Exception e)
+        {
+            throw new PersistenceException(e);
+        }
+
+        return response;
+    }
+
     //public async Task<PagedResult<ClientGrouped>> GetAllGroupedAsync(
     //BackOfficeClientSearchParameter sp,
     //CancellationToken cancellationToken = default)

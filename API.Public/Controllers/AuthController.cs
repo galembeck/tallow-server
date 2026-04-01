@@ -7,7 +7,7 @@ using Domain.Enumerators;
 using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Authentication;
+using Domain.Exceptions;
 
 namespace API.Public.Controllers;
 
@@ -59,12 +59,72 @@ public class AuthController : _BaseController
         var refreshToken = Request.Cookies["RefreshToken"];
 
         if (string.IsNullOrEmpty(accessToken) || string.IsNullOrEmpty(refreshToken))
-            throw new AuthenticationException(AuthenticationErrorMessage.UNAUTHORIZED.ToString());
+            throw new System.Security.Authentication.AuthenticationException(AuthenticationErrorMessage.UNAUTHORIZED.ToString());
 
         var model = await _authService.RevokeAccessTokenAsync(accessToken, refreshToken, Authenticated.User);
 
         GenerateAuthCookie(model);
 
         return Ok();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  PASSWORD RECOVERY
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Step 1 — Request a 6-character OTP sent to the user's e-mail.
+    /// Always returns 200 to prevent e-mail enumeration.
+    /// </summary>
+    [HttpPost("recovery/request")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> RequestPasswordRecovery(
+        [FromBody] PasswordRecoveryRequestDTO body,
+        CancellationToken cancellationToken = default)
+    {
+        await _authService.SendPasswordRecoveryAsync(body.Email, cancellationToken);
+        return Ok(new { message = "Se o e-mail existir em nossa base, você receberá um código de recuperação em instantes." });
+    }
+
+    /// <summary>
+    /// Step 2 — Verify the OTP token before showing the new-password form.
+    /// </summary>
+    [HttpPost("recovery/verify")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VerifyRecoveryToken(
+        [FromBody] PasswordRecoveryVerifyDTO body,
+        CancellationToken cancellationToken = default)
+    {
+        var valid = await _authService.VerifyPasswordRecoveryTokenAsync(body.Email, body.Token, cancellationToken);
+
+        if (!valid)
+            return BadRequest(new { message = "Código inválido ou expirado." });
+
+        return Ok(new { message = "Código verificado com sucesso." });
+    }
+
+    /// <summary>
+    /// Step 3 — Reset the password. Token is validated again server-side before the update.
+    /// </summary>
+    [HttpPost("recovery/reset")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ResetPassword(
+        [FromBody] PasswordResetDTO body,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await _authService.ResetPasswordAsync(body.Email, body.Token, body.NewPassword, cancellationToken);
+            return Ok(new { message = "Senha redefinida com sucesso. Faça login com sua nova senha." });
+        }
+        catch (BusinessException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }
