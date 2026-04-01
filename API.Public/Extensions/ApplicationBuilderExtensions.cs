@@ -44,5 +44,6 @@ public static class ApplicationBuilderExtensions
 
         app.MapControllers();
         app.MapHub<AdminNotificationHub>("/hubs/notifications");
+        app.UseHangfireDashboard();
     }
  }

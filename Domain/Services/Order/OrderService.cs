@@ -4,15 +4,18 @@ using Domain.Data.Models;
 using Domain.Enumerators;
 using Domain.Exceptions;
 using Domain.Repository;
+using Hangfire;
 
 namespace Domain.Services;
 
 public class OrderService(
     IOrderRepository orderRepository,
-    ICartRepository cartRepository) : IOrderService
+    ICartRepository cartRepository,
+    IBackgroundJobClient backgroundJobClient) : IOrderService
 {
     private readonly IOrderRepository _orderRepository = orderRepository;
     private readonly ICartRepository _cartRepository = cartRepository;
+    private readonly IBackgroundJobClient _backgroundJobClient = backgroundJobClient;
 
     public async Task<Order> CreateOrderFromCartAsync(
         string userId,
@@ -68,6 +71,16 @@ public class OrderService(
 
         await _orderRepository.InsertAsync(order);
 
+        _backgroundJobClient.Enqueue<IEmailService>(s =>
+            s.SendOrderCreatedEmailAsync(
+                order.BuyerName,
+                order.BuyerEmail,
+                order.Id,
+                order.TotalAmount,
+                order.ShippingCity,
+                order.ShippingState,
+                order.Items.Count));
+
         return order;
     }
 
@@ -91,7 +104,7 @@ public class OrderService(
         OrderStatus newStatus,
         CancellationToken cancellationToken = default)
     {
-        return await _orderRepository.UpdatePartialAsync(
+        var updated = await _orderRepository.UpdatePartialAsync(
             new Order { Id = orderId },
             order =>
             {
@@ -106,6 +119,28 @@ public class OrderService(
                 else if (newStatus == OrderStatus.CANCELLED)
                     order.CancelledAt = DateTime.UtcNow;
             });
+
+        if (newStatus == OrderStatus.PROCESSING)
+        {
+            _backgroundJobClient.Enqueue<IEmailService>(s =>
+                s.SendOrderInPreparationEmailAsync(
+                    updated.BuyerName,
+                    updated.BuyerEmail,
+                    updated.Id,
+                    updated.ShippingDeliveryTime));
+        }
+        else if (newStatus == OrderStatus.SHIPPED && !string.IsNullOrWhiteSpace(updated.TrackingCode))
+        {
+            _backgroundJobClient.Enqueue<IEmailService>(s =>
+                s.SendOrderShippedEmailAsync(
+                    updated.BuyerName,
+                    updated.BuyerEmail,
+                    updated.Id,
+                    updated.TrackingCode!,
+                    updated.ShippingService ?? "Correios"));
+        }
+
+        return updated;
     }
 
     public async Task<Order> UpdateOrderSuperFreteDataAsync(

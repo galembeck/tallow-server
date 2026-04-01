@@ -4,6 +4,7 @@ using Domain.Exceptions;
 using Domain.Repository;
 using Domain.Repository.User;
 using Domain.Utils;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Transactions;
@@ -15,9 +16,11 @@ public class UserService(
     IUserRepository userRepository,
     IUserSecurityInfoRepository userSecurityInfoRepository,
     IUserHistoricService userHistoricService,
-    IFileStorageService fileStorageService) : IUserService(repository)
+    IFileStorageService fileStorageService,
+    IBackgroundJobClient backgroundJobClient) : IUserService(repository)
 {
     private readonly IFileStorageService _fileStorageService = fileStorageService;
+    private readonly IBackgroundJobClient _backgroundJobClient = backgroundJobClient;
     public override async Task<User> CreateAsync(User user, UserSecurityInfo securityInfo)
     {
         try
@@ -29,6 +32,9 @@ public class UserService(
             var userSaved = await InsertClientAndCheckSecurityInfo(user, securityInfo);
 
             scope.Complete();
+
+            _backgroundJobClient.Enqueue<IEmailService>(s =>
+                s.SendWelcomeEmailAsync(userSaved.Name, userSaved.Email));
 
             return userSaved;
         }
