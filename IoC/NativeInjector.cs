@@ -19,6 +19,9 @@ public static class NativeInjector
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUserService, UserService>();
 
+        services.AddScoped<IUserAddressRepository, UserAddressRepository>();
+        services.AddScoped<IUserAddressService, UserAddressService>();
+
         #endregion .: USER :.
 
         #region .: USER SECURITY INFO :.

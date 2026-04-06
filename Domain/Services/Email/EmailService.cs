@@ -85,7 +85,7 @@ public class EmailService(IResend resend) : IEmailService
     {
         var message = new EmailMessage
         {
-            From    = From,
+            From = From,
             Subject = "Código de recuperação de senha — Terra & Tallow"
         };
         message.To.Add(recipientEmail);
@@ -177,11 +177,11 @@ public class EmailService(IResend resend) : IEmailService
 
     private static string BuildOrderCreatedTemplate(OrderCreatedEmailData d)
     {
-        var shortId    = d.OrderId[..8].ToUpper();
-        var orderDate  = d.OrderDate.ToString("dd/MM/yyyy 'às' HH:mm");
+        var shortId = d.OrderId[..8].ToUpper();
+        var orderDate = d.OrderDate.ToString("dd/MM/yyyy 'às' HH:mm");
         var complement = !string.IsNullOrWhiteSpace(d.ShippingComplement) ? $", {d.ShippingComplement}" : string.Empty;
 
-        var itemsHtml  = BuildItemsRows(d.Items);
+        var itemsHtml = BuildItemsRows(d.Items);
         var totalsHtml = BuildTotalsRows(d.SubTotalAmount, d.ShippingAmount, d.TotalAmount, d.ShippingService, d.ShippingDeliveryTime);
         var deliveryAlert = BuildDeliveryAlert(d.ShippingDeliveryTime);
 
@@ -375,8 +375,8 @@ public class EmailService(IResend resend) : IEmailService
 
         foreach (var item in items)
         {
-            var sku      = item.ProductId.Length >= 8 ? item.ProductId[..8].ToUpper() : item.ProductId.ToUpper();
-            var imgHtml  = !string.IsNullOrWhiteSpace(item.ProductImageUrl)
+            var sku = item.ProductId.Length >= 8 ? item.ProductId[..8].ToUpper() : item.ProductId.ToUpper();
+            var imgHtml = !string.IsNullOrWhiteSpace(item.ProductImageUrl)
                 ? $"""<td style="width:64px;padding-right:14px;vertical-align:top;"><img src="{item.ProductImageUrl}" width="60" height="60" alt="{item.ProductName}" style="border-radius:6px;display:block;object-fit:cover;border:1px solid #ede8e2;" /></td>"""
                 : string.Empty;
 
@@ -508,13 +508,13 @@ public class EmailService(IResend resend) : IEmailService
     private static string BuildPaymentApprovedTemplate(
         string name, string orderId, decimal totalAmount, string paymentMethod)
     {
-        var shortId     = orderId[..8].ToUpper();
+        var shortId = orderId[..8].ToUpper();
         var methodLabel = paymentMethod.ToUpper() switch
         {
-            "PIX"         => "Pix",
-            "BOLETO"      => "Boleto",
+            "PIX" => "Pix",
+            "BOLETO" => "Boleto",
             "CREDIT_CARD" => "Cart&#227;o de cr&#233;dito",
-            _             => paymentMethod
+            _ => paymentMethod
         };
 
         var body = $"""
@@ -582,12 +582,12 @@ public class EmailService(IResend resend) : IEmailService
     private static string BuildOrderInPreparationTemplate(
         string name, string orderId, string? estimatedDelivery)
     {
-        var shortId     = orderId[..8].ToUpper();
+        var shortId = orderId[..8].ToUpper();
         var deliveryRow = !string.IsNullOrWhiteSpace(estimatedDelivery)
             ? $"""
               <tr>
-                <td style="padding:6px 0;color:#8a7b72;">Prazo estimado</td>
-                <td style="padding:6px 0;text-align:right;font-weight:700;">{estimatedDelivery}</td>
+                <td style="padding:6px 0;color:#8a7b72;">Prazo estimado de prepara&#231;&#227;o</td>
+                <td style="padding:6px 0;text-align:right;font-weight:700;">10 dias</td>
               </tr>
               """
             : string.Empty;

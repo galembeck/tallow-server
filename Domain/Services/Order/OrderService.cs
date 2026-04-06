@@ -142,7 +142,7 @@ public class OrderService(
                     order.CancelledAt = DateTime.UtcNow;
             });
 
-        if (newStatus == OrderStatus.PROCESSING)
+        if (newStatus == OrderStatus.PREPARING)
         {
             // Fetch the full order so BuyerName/Email and ShippingDeliveryTime are populated
             var full = await _orderRepository.GetAsync(orderId, cancellationToken);

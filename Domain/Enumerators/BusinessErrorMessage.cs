@@ -87,4 +87,7 @@ public enum BusinessErrorMessage
 
     [EnumDescription("CART_NOT_FOUND_OR_EMPTY")]
     CART_NOT_FOUND_OR_EMPTY = 27,
+
+    [EnumDescription("ADDRESS_NOT_FOUND")]
+    ADDRESS_NOT_FOUND = 28,
 }

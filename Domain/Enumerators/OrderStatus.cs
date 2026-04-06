@@ -14,8 +14,8 @@ public enum OrderStatus
     [EnumDescription("PAYMENT_APPROVED")]
     PAYMENT_APPROVED = 3,
 
-    [EnumDescription("PROCESSING")]
-    PROCESSING = 4,
+    [EnumDescription("PREPARING")]
+    PREPARING = 4,
 
     [EnumDescription("SHIPPED")]
     SHIPPED = 5,

@@ -196,6 +196,8 @@ public class UserService(
                     user.Name = name;
                 if (!string.IsNullOrWhiteSpace(email))
                     user.Email = email;
+                if (!string.IsNullOrWhiteSpace(cellphone))
+                    user.Cellphone = cellphone;
                 if (!string.IsNullOrWhiteSpace(document))
                     user.Document = document;
                 if (hashedPassword != null)

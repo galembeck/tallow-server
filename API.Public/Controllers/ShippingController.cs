@@ -222,7 +222,7 @@ public class ShippingController(
                 cancellationToken: cancellationToken);
 
             if (checkoutResponse.Success)
-                await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.PROCESSING, cancellationToken);
+                await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.PREPARING, cancellationToken);
 
             return Ok(new
             {

@@ -72,7 +72,7 @@ public class OrderController : _BaseController
     }
 
     /// <summary>
-    /// Marks the order as being prepared (PROCESSING).
+    /// Marks the order as being prepared (PREPARING).
     /// Called when the admin clicks "Preparar Pedido".
     /// </summary>
     [HttpPatch("admin/{id}/prepare")]
@@ -89,7 +89,7 @@ public class OrderController : _BaseController
             if (order is null)
                 return NotFound();
 
-            await _orderService.UpdateOrderStatusAsync(id, OrderStatus.PROCESSING, cancellationToken);
+            await _orderService.UpdateOrderStatusAsync(id, OrderStatus.PREPARING, cancellationToken);
 
             return Ok(new { message = "Pedido marcado como em preparação." });
         }

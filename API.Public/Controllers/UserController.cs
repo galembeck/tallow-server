@@ -4,6 +4,7 @@ using API.Public.Filters;
 using API.Public.Validators;
 using Domain.Data.Entities;
 using Domain.Enumerators;
+using Domain.Exceptions;
 using Domain.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,9 +13,10 @@ namespace API.Public.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class UserController(IUserService userService) : _BaseController
+public class UserController(IUserService userService, IUserAddressService userAddressService) : _BaseController
 {
     private readonly IUserService _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+    private readonly IUserAddressService _userAddressService = userAddressService ?? throw new ArgumentNullException(nameof(userAddressService));
 
     [HttpPost]
     [AllowAnonymous]
@@ -88,7 +90,133 @@ public class UserController(IUserService userService) : _BaseController
         }
     }
 
-    // ─── ADMIN: CLIENTS ──────────────────────────────────────────────────────
+    #region .: USER ADDRESS(ES) :.
+
+    [HttpPost("address")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.CLIENT, ProfileType.ADMIN)]
+    public async Task<IActionResult> RegisterAddress([FromBody] RegisterAddressDTO body, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var userId = Authenticated?.User.Id;
+
+            await new AddressRegistrationValidator().ValidateAndThrowAsync(body);
+
+            var address = RegisterAddressDTO.DTOToModel(body);
+            var addressSaved = await _userAddressService.CreateAsync(address, userId);
+
+            var response = AddressResponseDTO.ModelToDTO(addressSaved);
+
+            response.CreatedBy = Authenticated?.User?.Name;
+            response.UpdatedBy = Authenticated?.User?.Name;
+
+            return Ok(response);
+        }
+        catch (Exception e)
+        {
+            StatusCode(StatusCodes.Status500InternalServerError, e.Message);
+
+            throw;
+        }
+    }
+
+    [HttpGet("address")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.CLIENT, ProfileType.ADMIN)]
+    public async Task<IActionResult> GetUserAddresses(CancellationToken cancellationToken = default)
+    {
+        var userId = Authenticated?.User?.Id;
+
+        var response = await _userAddressService.GetUserAddressesAsync(userId);
+
+        return Ok(AddressResponseDTO.ModelToDTO(response));
+    }
+
+    [HttpGet("address/{addressId}")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.CLIENT, ProfileType.ADMIN)]
+    public async Task<IActionResult> GetAddressById(string addressId, CancellationToken cancellationToken = default)
+    {
+        var response = await _userAddressService.GetByIdAsync(addressId);
+
+        return Ok(AddressResponseDTO.ModelToDTO(response));
+    }
+
+    [HttpPut("address/{addressId}")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.CLIENT, ProfileType.ADMIN)]
+    [ProducesResponseType(typeof(AddressResponseDTO), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateAddress(string addressId, [FromForm] UpdateAddressDTO body, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var actorId = Authenticated?.User?.Id;
+
+            var validator = new AddressUpdateValidator();
+            await validator.ValidateAndThrowAsync(body);
+
+            var existing = await _userAddressService.GetByIdAsync(addressId, cancellationToken);
+            if (existing == null)
+                return NotFound();
+
+            var updated = UpdateAddressDTO.ApplyToModel(body, existing);
+
+            var saved = await _userAddressService.UpdateAsync(
+                addressId,
+                body.AddressTitle,
+                body.ReceiverName,
+                body.ReceiverLastname,
+                body.ContactCellphone,
+                body.Zipcode,
+                body.Address,
+                body.Number,
+                body.Complement,
+                body.Neighborhood,
+                body.City,
+                body.State,
+                cancellationToken);
+
+            return Ok(AddressResponseDTO.ModelToDTO(saved));
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+    [HttpDelete("address/{addressId}")]
+    [AuthAttribute]
+    [Filters.AuthorizeAttribute(ProfileType.CLIENT, ProfileType.ADMIN)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteAddressById(string addressId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var userId = Authenticated?.User?.Id;
+
+            var address = await _userAddressService.GetByIdAsync(addressId);
+            if (address == null)
+                throw new BusinessException(BusinessErrorMessage.ADDRESS_NOT_FOUND);
+
+            await _userAddressService.DeleteAsync(address, userId);
+
+            return NoContent();
+        }
+        catch (Exception e)
+        {
+            return BadRequest(e.Message);
+        }
+    }
+
+
+    #endregion .: USER ADDRESS(ES) :.
+
+    #region .: ADMIN: CLIENTS :.
 
     [HttpGet("admin/clients")]
     [AuthAttribute]
@@ -148,7 +276,9 @@ public class UserController(IUserService userService) : _BaseController
         }
     }
 
-    // ─── ADMIN: ADMINS ────────────────────────────────────────────────────────
+    #endregion .: ADMIN: CLIENTS :.
+
+    #region .: ADMIN: ADMINS :.
 
     [HttpGet("admin/admins")]
     [AuthAttribute]
@@ -187,7 +317,9 @@ public class UserController(IUserService userService) : _BaseController
         }
     }
 
-    // ─── ADMIN: PROFILE TYPE ─────────────────────────────────────────────────
+    #endregion .: ADMIN: ADMINS :.
+
+    #region .: ADMIN: PROFILE TYPE :.
 
     [HttpPut("admin/{id}/profile")]
     [AuthAttribute]
@@ -206,4 +338,6 @@ public class UserController(IUserService userService) : _BaseController
             return StatusCode(StatusCodes.Status400BadRequest, e.Message);
         }
     }
+
+    #endregion .: ADMIN: PROFILE TYPE :.
 }

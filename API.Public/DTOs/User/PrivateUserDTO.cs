@@ -1,10 +1,8 @@
 ﻿using API.Public.DTOs._Base;
 using Domain.Data.Entities;
-using Domain.Data.Models;
 using Domain.Enumerators;
 using Domain.Utils;
 using System.Globalization;
-using System.Xml.Linq;
 
 namespace API.Public.DTOs;
 

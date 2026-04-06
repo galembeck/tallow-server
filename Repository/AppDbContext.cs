@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     #region .: ENTITIES :.
 
     public DbSet<User> Users { get; set; }
+    public DbSet<UserAddress> UserAddresses { get; set; }
     public DbSet<UserSecurityInfo> UserSecurityInfos { get; set; }
     public DbSet<UserHistoric> UserHistorics { get; set; }
     public DbSet<AccessToken> AccessTokens { get; set; }
