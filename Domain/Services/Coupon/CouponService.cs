@@ -26,10 +26,13 @@ public class CouponService(ICouponRepository couponRepository) : ICouponService
         if (coupon == null || !coupon.IsActive)
             return null;
 
+        if (coupon.ExpiresAt.HasValue && coupon.ExpiresAt.Value <= DateTime.UtcNow)
+            return null;
+
         return coupon;
     }
 
-    public async Task<Coupon> CreateAsync(string code, decimal discountPercentage, string? actorId = null, CancellationToken cancellationToken = default)
+    public async Task<Coupon> CreateAsync(string code, decimal discountPercentage, DateTime? expiresAt = null, string? actorId = null, CancellationToken cancellationToken = default)
     {
         var existing = await _couponRepository.GetByCodeAsync(code, cancellationToken);
         if (existing != null)
@@ -39,13 +42,15 @@ public class CouponService(ICouponRepository couponRepository) : ICouponService
         {
             Code = code.ToUpper().Trim(),
             DiscountPercentage = discountPercentage,
-            IsActive = true
+            IsActive = true,
+            UsageCount = 0,
+            ExpiresAt = expiresAt?.ToUniversalTime()
         };
 
         return await _couponRepository.InsertAsync(coupon, actorId);
     }
 
-    public async Task<Coupon> UpdateAsync(string id, string code, decimal discountPercentage, string? actorId = null, CancellationToken cancellationToken = default)
+    public async Task<Coupon> UpdateAsync(string id, string code, decimal discountPercentage, DateTime? expiresAt, string? actorId = null, CancellationToken cancellationToken = default)
     {
         var existing = await _couponRepository.GetByCodeAsync(code, cancellationToken);
         if (existing != null && existing.Id != id)
@@ -57,6 +62,7 @@ public class CouponService(ICouponRepository couponRepository) : ICouponService
             {
                 c.Code = code.ToUpper().Trim();
                 c.DiscountPercentage = discountPercentage;
+                c.ExpiresAt = expiresAt?.ToUniversalTime();
             },
             actorId);
     }
@@ -67,5 +73,12 @@ public class CouponService(ICouponRepository couponRepository) : ICouponService
             new Coupon { Id = id },
             c => c.IsActive = !c.IsActive,
             actorId);
+    }
+
+    public async Task IncrementUsageAsync(string id, CancellationToken cancellationToken = default)
+    {
+        await _couponRepository.UpdatePartialAsync(
+            new Coupon { Id = id },
+            c => c.UsageCount += 1);
     }
 }
