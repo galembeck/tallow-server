@@ -341,7 +341,7 @@ public class OrderController : _BaseController
         {
             var userId = Authenticated?.User?.Id;
 
-            var order = await _orderService.CreateOrderFromCartAsync(userId, dto.CartId, dto.BuyerInfo, dto.ShippingInfo, cancellationToken);
+            var order = await _orderService.CreateOrderFromCartAsync(userId, dto.CartId, dto.BuyerInfo, dto.ShippingInfo, dto.CouponCode, cancellationToken);
 
             await _notificationService.NotifyOrderCreatedAsync(order.Id, order.BuyerName, order.TotalAmount, cancellationToken);
 

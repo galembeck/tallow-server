@@ -89,6 +89,13 @@ public static class NativeInjector
 
         #endregion .: WISHLIST :.
 
+        #region .: COUPON :.
+
+        services.AddScoped<ICouponRepository, CouponRepository>();
+        services.AddScoped<ICouponService, CouponService>();
+
+        #endregion .: COUPON :.
+
         #region .: PAYMENT :.
 
         services.AddScoped<IPaymentRepository, PaymentRepository>();

@@ -23,6 +23,10 @@ public class OrderResponseDTO
 
     public PaymentSummaryDTO? Payment { get; set; }
 
+    public string? CouponCode { get; set; }
+    public decimal? DiscountPercentage { get; set; }
+    public decimal? DiscountAmount { get; set; }
+
 
     public static OrderResponseDTO ToDTO(Order order, Payment? payment = null)
     {
@@ -72,7 +76,11 @@ public class OrderResponseDTO
                 Status = payment.Status.ToString(),
                 PaymentMethod = payment.PaymentMethod.ToString(),
                 TransactionAmount = payment.TransactionAmount
-            } : null
+            } : null,
+
+            CouponCode = order.CouponCode,
+            DiscountPercentage = order.DiscountPercentage,
+            DiscountAmount = order.DiscountAmount
         };
     }
 }

@@ -49,6 +49,14 @@ public class Order : BaseEntity, IBaseEntity<Order>
     public string? CustomerNotes { get; set; }
     public string? AdminNotes { get; set; }
 
+    public string? CouponCode { get; set; }
+
+    [Column(TypeName = "decimal(5,2)")]
+    public decimal? DiscountPercentage { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal? DiscountAmount { get; set; }
+
 
 
     #region .: METHODS :.
@@ -86,7 +94,10 @@ public class Order : BaseEntity, IBaseEntity<Order>
             DeliveredAt = entity.DeliveredAt,
             CancelledAt = entity.CancelledAt,
             CustomerNotes = entity.CustomerNotes,
-            AdminNotes = entity.AdminNotes
+            AdminNotes = entity.AdminNotes,
+            CouponCode = entity.CouponCode,
+            DiscountPercentage = entity.DiscountPercentage,
+            DiscountAmount = entity.DiscountAmount
         };
 
         newEntity.InitializeInstance(entity);
