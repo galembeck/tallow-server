@@ -14,6 +14,7 @@ public class Order : BaseEntity, IBaseEntity<Order>
     public User User { get; set; }
 
     public List<OrderItem> Items { get; set; } = new List<OrderItem>();
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
     public OrderStatus Status { get; set; }
 

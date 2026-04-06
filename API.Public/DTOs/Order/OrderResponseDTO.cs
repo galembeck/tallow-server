@@ -28,8 +28,14 @@ public class OrderResponseDTO
     public decimal? DiscountAmount { get; set; }
 
 
-    public static OrderResponseDTO ToDTO(Order order, Payment? payment = null)
+    public static OrderResponseDTO ToDTO(Order order)
     {
+        // Pick the most recent payment (approved first, then by date)
+        var payment = order.Payments?
+            .OrderByDescending(p => p.Status == Domain.Enumerators.PaymentStatus.APPROVED ? 1 : 0)
+            .ThenByDescending(p => p.CreatedAt)
+            .FirstOrDefault();
+
         return new OrderResponseDTO
         {
             Id = order.Id,
