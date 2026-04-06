@@ -6,7 +6,7 @@ namespace Domain.Services;
 
 public interface IOrderService
 {
-    Task<Order> CreateOrderFromCartAsync(string userId, string cartId, BuyerInfo buyerInfo, ShippingInfo shippingInfo, CancellationToken cancellationToken = default);
+    Task<Order> CreateOrderFromCartAsync(string userId, string cartId, BuyerInfo buyerInfo, ShippingInfo shippingInfo, string? couponCode = null, CancellationToken cancellationToken = default);
     Task<Order?> GetOrderByIdAsync(string orderId, CancellationToken cancellationToken = default);
     Task<List<Order>> GetUserOrdersAsync(string userId, CancellationToken cancellationToken = default);
     Task<List<Order>> GetAllOrdersAsync(CancellationToken cancellationToken = default);
