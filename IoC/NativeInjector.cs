@@ -111,6 +111,12 @@ public static class NativeInjector
 
         #endregion .: EMAIL :.
 
+        #region .: JOBS :.
+
+        services.AddScoped<ITrackingCodeEmailJob, TrackingCodeEmailJob>();
+
+        #endregion .: JOBS :.
+
         #endregion .: INTERNAL INJECTIONS :.
     }
 }

@@ -3,6 +3,7 @@ using API.Public.DTOs;
 using API.Public.Filters;
 using Domain.Enumerators;
 using Domain.Services;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -16,17 +17,20 @@ public class OrderController : _BaseController
     private readonly IOrderService _orderService;
     private readonly IShippingService _shippingService;
     private readonly IAdminNotificationService _notificationService;
+    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ILogger<OrderController> _logger;
 
     public OrderController(
         IOrderService orderService,
         IShippingService shippingService,
         IAdminNotificationService notificationService,
+        IBackgroundJobClient backgroundJobClient,
         ILogger<OrderController> logger)
     {
         _orderService        = orderService        ?? throw new ArgumentNullException(nameof(orderService));
         _shippingService     = shippingService     ?? throw new ArgumentNullException(nameof(shippingService));
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _backgroundJobClient = backgroundJobClient ?? throw new ArgumentNullException(nameof(backgroundJobClient));
         _logger              = logger              ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -161,7 +165,20 @@ public class OrderController : _BaseController
             // Step 4 – set status to SHIPPED
             await _orderService.UpdateOrderStatusAsync(id, OrderStatus.SHIPPED, cancellationToken);
 
-            // Step 5 – notify admin hub
+            // Step 5 – enqueue the "order shipped" email.
+            // If the tracking code is already available, fire immediately;
+            // otherwise start a polling job that retries every 5 min until SuperFrete assigns one.
+            if (!string.IsNullOrWhiteSpace(trackingCode))
+                _backgroundJobClient.Enqueue<IEmailService>(s =>
+                    s.SendOrderShippedEmailAsync(
+                        order.BuyerName, order.BuyerEmail, id,
+                        trackingCode, order.ShippingService ?? "Correios"));
+            else
+                _backgroundJobClient.Schedule<ITrackingCodeEmailJob>(
+                    j => j.SendWhenTrackingAvailableAsync(id, 0),
+                    TimeSpan.FromMinutes(5));
+
+            // Step 6 – notify admin hub
             await _notificationService.NotifyOrderShippedAsync(id, trackingCode ?? string.Empty, cancellationToken);
 
             return Ok(new

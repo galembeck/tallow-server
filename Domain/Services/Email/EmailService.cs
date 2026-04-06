@@ -98,7 +98,7 @@ public class EmailService(IResend resend) : IEmailService
         string recipientName,
         string recipientEmail,
         string orderId,
-        string? trackingCode,
+        string trackingCode,
         string shippingService)
     {
         var message = new EmailMessage
@@ -640,37 +640,9 @@ public class EmailService(IResend resend) : IEmailService
     }
 
     private static string BuildOrderShippedTemplate(
-        string name, string orderId, string? trackingCode, string shippingService)
+        string name, string orderId, string trackingCode, string shippingService)
     {
         var shortId = orderId[..8].ToUpper();
-        var hasTracking = !string.IsNullOrWhiteSpace(trackingCode);
-
-        var trackingBox = hasTracking
-            ? $"""
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#2c2825;border-radius:10px;margin-bottom:24px;">
-                <tr>
-                  <td style="padding:24px;text-align:center;">
-                    <p style="margin:0 0 8px;font-size:11px;color:#c8a97e;letter-spacing:3px;text-transform:uppercase;">C&#243;digo de rastreio</p>
-                    <p style="margin:0;font-size:26px;font-weight:700;color:#f5ebe0;letter-spacing:4px;">{trackingCode}</p>
-                  </td>
-                </tr>
-              </table>
-              """
-            : $"""
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#2c2825;border-radius:10px;margin-bottom:24px;">
-                <tr>
-                  <td style="padding:24px;text-align:center;">
-                    <p style="margin:0 0 8px;font-size:11px;color:#c8a97e;letter-spacing:3px;text-transform:uppercase;">C&#243;digo de rastreio</p>
-                    <p style="margin:0;font-size:15px;font-weight:600;color:#c8a97e;">Dispon&#237;vel em breve</p>
-                    <p style="margin:8px 0 0;font-size:12px;color:#a0908a;">Voc&#234; ser&#225; notificado quando o c&#243;digo estiver pronto.</p>
-                  </td>
-                </tr>
-              </table>
-              """;
-
-        var preheader = hasTracking
-            ? $"Seu pedido #{shortId} foi enviado! Rastreie com o código {trackingCode}."
-            : $"Seu pedido #{shortId} foi enviado e está a caminho!";
 
         var body = $"""
             {TopBar()}
@@ -688,7 +660,15 @@ public class EmailService(IResend resend) : IEmailService
                   <tr>
                     <td style="padding:32px 40px;">
                       <p style="margin:0 0 20px;font-size:15px;color:#2c2825;">Boa not&#237;cia, <strong>{name}</strong>! Seu pedido est&#225; a caminho.</p>
-                      {trackingBox}
+                      <!-- Tracking box -->
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background:#2c2825;border-radius:10px;margin-bottom:24px;">
+                        <tr>
+                          <td style="padding:24px;text-align:center;">
+                            <p style="margin:0 0 8px;font-size:11px;color:#c8a97e;letter-spacing:3px;text-transform:uppercase;">C&#243;digo de rastreio</p>
+                            <p style="margin:0;font-size:26px;font-weight:700;color:#f5ebe0;letter-spacing:4px;">{trackingCode}</p>
+                          </td>
+                        </tr>
+                      </table>
                       <!-- Info box -->
                       <table width="100%" cellpadding="0" cellspacing="0" style="background:#faf7f4;border-left:3px solid #c8a97e;border-radius:0 8px 8px 0;margin-bottom:24px;">
                         <tr>
@@ -727,7 +707,9 @@ public class EmailService(IResend resend) : IEmailService
             {Footer()}
             """;
 
-        return WrapLayout(preheader, body);
+        return WrapLayout(
+            $"Seu pedido #{shortId} foi enviado! Rastreie com o código {trackingCode}.",
+            body);
     }
 
     private static string BuildPasswordRecoveryTemplate(string name, string token, DateTime expiresAt)
