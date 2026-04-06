@@ -16,6 +16,7 @@ public class OrderRepository : BaseRepository<Order>, IOrderRepository
             .Include(o => o.User)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
+            .Include(o => o.Payments)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
     }
 
@@ -25,6 +26,7 @@ public class OrderRepository : BaseRepository<Order>, IOrderRepository
             .Include(o => o.User)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
+            .Include(o => o.Payments)
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -56,6 +58,7 @@ public class OrderRepository : BaseRepository<Order>, IOrderRepository
         return await _context.Set<Order>()
             .Include(o => o.User)
             .Include(o => o.Items)
+            .Include(o => o.Payments)
             .Where(o => o.DeletedAt == null)
             .OrderByDescending(o => o.CreatedAt)
             .ToListAsync(cancellationToken);

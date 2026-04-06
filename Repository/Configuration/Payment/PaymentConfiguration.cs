@@ -27,7 +27,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(p => p.Order)
-            .WithMany()
+            .WithMany(o => o.Payments)
             .HasForeignKey(p => p.OrderId)
             .OnDelete(DeleteBehavior.SetNull);
 
