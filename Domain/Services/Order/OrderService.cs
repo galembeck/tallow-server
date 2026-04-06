@@ -46,14 +46,18 @@ public class OrderService(
         decimal? discountPercentage = null;
         string? appliedCouponCode = null;
 
+        string? couponIdToIncrement = null;
+
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
             var coupon = await _couponRepository.GetByCodeAsync(couponCode, cancellationToken);
-            if (coupon != null && coupon.IsActive)
+            if (coupon != null && coupon.IsActive &&
+                (!coupon.ExpiresAt.HasValue || coupon.ExpiresAt.Value > DateTime.UtcNow))
             {
                 discountPercentage = coupon.DiscountPercentage;
                 appliedCouponCode = coupon.Code;
                 discountAmount = Math.Round(cart.TotalAmount * (coupon.DiscountPercentage / 100m), 2);
+                couponIdToIncrement = coupon.Id;
             }
         }
 
@@ -102,6 +106,11 @@ public class OrderService(
         };
 
         await _orderRepository.InsertAsync(order);
+
+        if (couponIdToIncrement != null)
+            await _couponRepository.UpdatePartialAsync(
+                new Coupon { Id = couponIdToIncrement },
+                c => c.UsageCount += 1);
 
         var emailData = new OrderCreatedEmailData
         {

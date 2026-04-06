@@ -4,4 +4,5 @@ public class UpdateCouponDTO
 {
     public string Code { get; set; }
     public decimal DiscountPercentage { get; set; }
+    public DateTime? ExpiresAt { get; set; }
 }

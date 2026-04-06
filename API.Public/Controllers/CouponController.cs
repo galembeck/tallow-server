@@ -46,7 +46,7 @@ public class CouponController : _BaseController
         try
         {
             var actorId = Authenticated?.User?.Id;
-            var coupon = await _couponService.CreateAsync(dto.Code, dto.DiscountPercentage, actorId, cancellationToken);
+            var coupon = await _couponService.CreateAsync(dto.Code, dto.DiscountPercentage, dto.ExpiresAt, actorId, cancellationToken);
             return CreatedAtAction(nameof(GetAllCoupons), CouponResponseDTO.ToDTO(coupon));
         }
         catch (Exception e)
@@ -65,7 +65,7 @@ public class CouponController : _BaseController
         try
         {
             var actorId = Authenticated?.User?.Id;
-            var coupon = await _couponService.UpdateAsync(id, dto.Code, dto.DiscountPercentage, actorId, cancellationToken);
+            var coupon = await _couponService.UpdateAsync(id, dto.Code, dto.DiscountPercentage, dto.ExpiresAt, actorId, cancellationToken);
             return Ok(CouponResponseDTO.ToDTO(coupon));
         }
         catch (Exception e)

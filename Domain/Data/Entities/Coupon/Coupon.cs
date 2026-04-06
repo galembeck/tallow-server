@@ -14,6 +14,10 @@ public class Coupon : BaseEntity, IBaseEntity<Coupon>
 
     public bool IsActive { get; set; } = true;
 
+    public int UsageCount { get; set; } = 0;
+
+    public DateTime? ExpiresAt { get; set; }
+
 
 
     #region .: METHODS :.
@@ -27,7 +31,9 @@ public class Coupon : BaseEntity, IBaseEntity<Coupon>
         {
             Code = entity.Code,
             DiscountPercentage = entity.DiscountPercentage,
-            IsActive = entity.IsActive
+            IsActive = entity.IsActive,
+            UsageCount = entity.UsageCount,
+            ExpiresAt = entity.ExpiresAt
         };
 
         newEntity.InitializeInstance(entity);

@@ -8,6 +8,8 @@ public class CouponResponseDTO
     public string Code { get; set; }
     public decimal DiscountPercentage { get; set; }
     public bool IsActive { get; set; }
+    public int UsageCount { get; set; }
+    public DateTime? ExpiresAt { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 
     public static CouponResponseDTO ToDTO(Coupon coupon) => new CouponResponseDTO
@@ -16,6 +18,8 @@ public class CouponResponseDTO
         Code = coupon.Code,
         DiscountPercentage = coupon.DiscountPercentage,
         IsActive = coupon.IsActive,
+        UsageCount = coupon.UsageCount,
+        ExpiresAt = coupon.ExpiresAt,
         CreatedAt = coupon.CreatedAt
     };
 }
