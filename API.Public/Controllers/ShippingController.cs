@@ -354,7 +354,7 @@ public class ShippingController(
             if (cancelled)
             {
                 await _orderService.ClearOrderShippingDataAsync(orderId, cancellationToken);
-                await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.PROCESSING, cancellationToken);
+                await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.PREPARING, cancellationToken);
             }
 
             return Ok(new { cancelled });

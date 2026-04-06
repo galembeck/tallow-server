@@ -23,7 +23,7 @@ public class OrderService(
     private static readonly OrderStatus[] _stockDeductedStatuses =
     [
         OrderStatus.PAYMENT_APPROVED,
-        OrderStatus.PROCESSING,
+        OrderStatus.PREPARING,
         OrderStatus.SHIPPED
     ];
 
@@ -223,7 +223,7 @@ public class OrderService(
             OrderStatus.PENDING,
             OrderStatus.PAYMENT_PENDING,
             OrderStatus.PAYMENT_APPROVED,
-            OrderStatus.PROCESSING
+            OrderStatus.PREPARING
         ];
 
         if (!cancellableStatuses.Contains(order.Status))
