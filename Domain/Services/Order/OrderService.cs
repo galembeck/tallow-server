@@ -220,21 +220,9 @@ public class OrderService(
                         full.Id,
                         full.ShippingDeliveryTime));
         }
-        else if (newStatus == OrderStatus.SHIPPED)
-        {
-            // Fetch the full row so BuyerName/Email and ShippingService are populated.
-            // TrackingCode may still be null for carriers that defer code assignment —
-            // the email is sent regardless and shows "Disponível em breve" in that case.
-            var full = await _orderRepository.GetAsync(orderId, cancellationToken);
-            if (full != null)
-                _backgroundJobClient.Enqueue<IEmailService>(s =>
-                    s.SendOrderShippedEmailAsync(
-                        full.BuyerName,
-                        full.BuyerEmail,
-                        full.Id,
-                        full.TrackingCode,
-                        full.ShippingService ?? "Correios"));
-        }
+        // Note: the "order shipped" email is NOT triggered here.
+        // It is enqueued by OrderController.ShipOrder via TrackingCodeEmailJob,
+        // which polls SuperFrete until the tracking code is available before sending.
 
         return updated;
     }

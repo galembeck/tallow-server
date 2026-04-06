@@ -25,7 +25,7 @@ public interface IEmailService
         string recipientName,
         string recipientEmail,
         string orderId,
-        string? trackingCode,
+        string trackingCode,
         string shippingService);
 
     Task SendPasswordRecoveryEmailAsync(
