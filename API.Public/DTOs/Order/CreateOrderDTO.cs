@@ -10,4 +10,6 @@ public class CreateOrderDTO
 
     public BuyerInfo BuyerInfo { get; set; }
     public ShippingInfo ShippingInfo { get; set; }
+
+    public string? CouponCode { get; set; }
 }

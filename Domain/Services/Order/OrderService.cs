@@ -13,11 +13,13 @@ public class OrderService(
     IOrderRepository orderRepository,
     ICartRepository cartRepository,
     IProductRepository productRepository,
+    ICouponRepository couponRepository,
     IBackgroundJobClient backgroundJobClient) : IOrderService
 {
     private readonly IOrderRepository _orderRepository = orderRepository;
     private readonly ICartRepository _cartRepository = cartRepository;
     private readonly IProductRepository _productRepository = productRepository;
+    private readonly ICouponRepository _couponRepository = couponRepository;
     private readonly IBackgroundJobClient _backgroundJobClient = backgroundJobClient;
 
     private static readonly OrderStatus[] _stockDeductedStatuses =
@@ -32,12 +34,28 @@ public class OrderService(
         string cartId,
         BuyerInfo buyerInfo,
         ShippingInfo shippingInfo,
+        string? couponCode = null,
         CancellationToken cancellationToken = default)
     {
         var cart = await _cartRepository.GetCartWithItemsAsync(cartId, cancellationToken);
 
         if (cart == null || cart.Items.Count == 0)
             throw new BusinessException(BusinessErrorMessage.CART_NOT_FOUND_OR_EMPTY);
+
+        decimal discountAmount = 0;
+        decimal? discountPercentage = null;
+        string? appliedCouponCode = null;
+
+        if (!string.IsNullOrWhiteSpace(couponCode))
+        {
+            var coupon = await _couponRepository.GetByCodeAsync(couponCode, cancellationToken);
+            if (coupon != null && coupon.IsActive)
+            {
+                discountPercentage = coupon.DiscountPercentage;
+                appliedCouponCode = coupon.Code;
+                discountAmount = Math.Round(cart.TotalAmount * (coupon.DiscountPercentage / 100m), 2);
+            }
+        }
 
         var order = new Order
         {
@@ -46,7 +64,11 @@ public class OrderService(
 
             SubTotalAmount = cart.TotalAmount,
             ShippingAmount = shippingInfo.ShippingAmount,
-            TotalAmount = cart.TotalAmount + shippingInfo.ShippingAmount,
+            TotalAmount = cart.TotalAmount + shippingInfo.ShippingAmount - discountAmount,
+
+            CouponCode = appliedCouponCode,
+            DiscountPercentage = discountPercentage,
+            DiscountAmount = discountAmount > 0 ? discountAmount : null,
 
             Items = cart.Items.Select(cartItem => new OrderItem
             {
