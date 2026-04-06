@@ -352,7 +352,10 @@ public class ShippingController(
             var cancelled = await _shippingService.CancelOrderAsync(order.SuperFreteOrderId, body.Description, cancellationToken);
 
             if (cancelled)
-                await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.CANCELLED, cancellationToken);
+            {
+                await _orderService.ClearOrderShippingDataAsync(orderId, cancellationToken);
+                await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.PROCESSING, cancellationToken);
+            }
 
             return Ok(new { cancelled });
         }
