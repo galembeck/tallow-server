@@ -12,11 +12,20 @@ namespace Domain.Services;
 public class OrderService(
     IOrderRepository orderRepository,
     ICartRepository cartRepository,
+    IProductRepository productRepository,
     IBackgroundJobClient backgroundJobClient) : IOrderService
 {
     private readonly IOrderRepository _orderRepository = orderRepository;
     private readonly ICartRepository _cartRepository = cartRepository;
+    private readonly IProductRepository _productRepository = productRepository;
     private readonly IBackgroundJobClient _backgroundJobClient = backgroundJobClient;
+
+    private static readonly OrderStatus[] _stockDeductedStatuses =
+    [
+        OrderStatus.PAYMENT_APPROVED,
+        OrderStatus.PROCESSING,
+        OrderStatus.SHIPPED
+    ];
 
     public async Task<Order> CreateOrderFromCartAsync(
         string userId,
@@ -126,6 +135,32 @@ public class OrderService(
         OrderStatus newStatus,
         CancellationToken cancellationToken = default)
     {
+        if (newStatus == OrderStatus.PAYMENT_APPROVED || newStatus == OrderStatus.CANCELLED)
+        {
+            var currentOrder = await _orderRepository.GetByIdWithItemsAsync(orderId, cancellationToken);
+            if (currentOrder != null)
+            {
+                if (newStatus == OrderStatus.PAYMENT_APPROVED)
+                {
+                    foreach (var item in currentOrder.Items)
+                    {
+                        await _productRepository.UpdatePartialAsync(
+                            new Product { Id = item.ProductId },
+                            p => p.StockAmount = Math.Max(0, p.StockAmount - item.Quantity));
+                    }
+                }
+                else if (newStatus == OrderStatus.CANCELLED && _stockDeductedStatuses.Contains(currentOrder.Status))
+                {
+                    foreach (var item in currentOrder.Items)
+                    {
+                        await _productRepository.UpdatePartialAsync(
+                            new Product { Id = item.ProductId },
+                            p => p.StockAmount += item.Quantity);
+                    }
+                }
+            }
+        }
+
         var updated = await _orderRepository.UpdatePartialAsync(
             new Order { Id = orderId },
             order =>
@@ -170,6 +205,43 @@ public class OrderService(
         }
 
         return updated;
+    }
+
+    public async Task<Order> CancelOrderAsync(
+        string orderId,
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        var order = await _orderRepository.GetByIdWithItemsAsync(orderId, cancellationToken)
+            ?? throw new BusinessException(BusinessErrorMessage.ORDER_NOT_FOUND);
+
+        if (order.UserId != userId)
+            throw new BusinessException(BusinessErrorMessage.NOT_FOUND);
+
+        OrderStatus[] cancellableStatuses =
+        [
+            OrderStatus.PENDING,
+            OrderStatus.PAYMENT_PENDING,
+            OrderStatus.PAYMENT_APPROVED,
+            OrderStatus.PROCESSING
+        ];
+
+        if (!cancellableStatuses.Contains(order.Status))
+            throw new BusinessException("Pedido não pode ser cancelado pois já foi enviado ou concluído.");
+
+        return await UpdateOrderStatusAsync(orderId, OrderStatus.CANCELLED, cancellationToken);
+    }
+
+    public async Task ClearOrderShippingDataAsync(string orderId, CancellationToken cancellationToken = default)
+    {
+        await _orderRepository.UpdatePartialAsync(
+            new Order { Id = orderId },
+            order =>
+            {
+                order.SuperFreteOrderId = null;
+                order.TrackingCode = null;
+                order.SuperFreteLabelUrl = null;
+            });
     }
 
     public async Task<Order> UpdateOrderSuperFreteDataAsync(

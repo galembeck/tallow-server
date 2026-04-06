@@ -312,6 +312,25 @@ public class OrderController : _BaseController
         }
     }
 
+    [HttpPatch("{id}/cancel")]
+    [AuthAttribute]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CancelOrder(string id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var userId = Authenticated?.User?.Id;
+            await _orderService.CancelOrderAsync(id, userId, cancellationToken);
+            return Ok(new { message = "Pedido cancelado com sucesso." });
+        }
+        catch (Exception e)
+        {
+            return StatusCode(StatusCodes.Status400BadRequest, e.Message);
+        }
+    }
+
     [HttpPost]
     [AuthAttribute]
     [ProducesResponseType(typeof(OrderResponseDTO), StatusCodes.Status201Created)]
