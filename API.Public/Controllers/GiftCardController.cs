@@ -90,6 +90,137 @@ public class GiftCardController : _BaseController
         catch (Exception e) { return StatusCode(400, e.Message); }
     }
 
+    // POST /gift-card/initiate — creates a pending gift card (step 1 of checkout)
+    [HttpPost("initiate")]
+    [AuthAttribute]
+    public async Task<IActionResult> Initiate([FromBody] InitiateGiftCardDTO dto, CancellationToken ct = default)
+    {
+        try
+        {
+            var userId = Authenticated?.User?.Id;
+            var gc = await _giftCardService.CreateAsync(userId!, dto.Amount, userId, ct);
+            return Ok(GiftCardResponseDTO.ToDTO(gc));
+        }
+        catch (Exception e) { return StatusCode(400, e.Message); }
+    }
+
+    // POST /gift-card/{id}/pay — processes payment for a pending gift card (step 2 of checkout)
+    [HttpPost("{id}/pay")]
+    [AuthAttribute]
+    public async Task<IActionResult> Pay(string id, [FromBody] PayGiftCardDTO dto, CancellationToken ct = default)
+    {
+        try
+        {
+            var gc = await _giftCardService.GetByIdAsync(id, ct);
+            if (gc == null) return NotFound();
+
+            var userId = Authenticated?.User?.Id;
+            var user   = Authenticated?.User;
+
+            var payerFirstName = dto.Payer.FirstName ?? user?.Name?.Split(' ').FirstOrDefault() ?? "";
+            var payerLastName  = dto.Payer.LastName  ?? string.Join(" ", user?.Name?.Split(' ').Skip(1) ?? Array.Empty<string>());
+            var payerIdentification = dto.Payer.Identification != null
+                ? new IdentificationRequest { Type = dto.Payer.Identification.Type, Number = dto.Payer.Identification.Number }
+                : new IdentificationRequest { Type = "CPF", Number = user?.Document ?? "" };
+
+            var additionalInfo = new AdditionalInfoRequest
+            {
+                IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                Items =
+                [
+                    new AdditionalItemRequest
+                    {
+                        Id        = gc.Id,
+                        Title     = $"Vale Presente Terra & Tallow — R$ {gc.Amount:F2}",
+                        Quantity  = 1,
+                        UnitPrice = gc.Amount,
+                    }
+                ],
+                Payer = new AdditionalPayerRequest
+                {
+                    FirstName = payerFirstName,
+                    LastName  = payerLastName
+                }
+            };
+
+            var description = $"Vale Presente — R$ {gc.Amount:F2} — Terra & Tallow";
+
+            MercadoPagoPaymentRequest mpRequest = dto.PaymentType switch
+            {
+                PaymentMethod.PIX => new MercadoPagoPaymentRequest
+                {
+                    TransactionAmount   = gc.Amount,
+                    PaymentMethodId     = "pix",
+                    Installments        = 1,
+                    StatementDescriptor = "TERRAETALLOW",
+                    Description         = description,
+                    ExternalReference   = gc.Id,
+                    DateOfExpiration    = dto.DateOfExpiration ?? DateTime.UtcNow.AddMinutes(30),
+                    Capture             = true,
+                    BinaryMode          = false,
+                    Payer = new PayerRequest
+                    {
+                        Email          = dto.Payer.Email,
+                        FirstName      = payerFirstName,
+                        LastName       = payerLastName,
+                        Identification = payerIdentification
+                    },
+                    AdditionalInfo = additionalInfo
+                },
+                PaymentMethod.BOLETO => new MercadoPagoPaymentRequest
+                {
+                    TransactionAmount   = gc.Amount,
+                    PaymentMethodId     = "boleto",
+                    Installments        = 1,
+                    StatementDescriptor = "TERRAETALLOW",
+                    Description         = description,
+                    ExternalReference   = gc.Id,
+                    DateOfExpiration    = dto.DateOfExpiration ?? DateTime.UtcNow.AddDays(3),
+                    Capture             = true,
+                    BinaryMode          = false,
+                    Payer = new PayerRequest
+                    {
+                        Email          = dto.Payer.Email,
+                        FirstName      = payerFirstName,
+                        LastName       = payerLastName,
+                        Identification = payerIdentification
+                    },
+                    AdditionalInfo = additionalInfo
+                },
+                _ => new MercadoPagoPaymentRequest // CREDIT_CARD
+                {
+                    Token               = dto.Token,
+                    TransactionAmount   = gc.Amount,
+                    StatementDescriptor = "TERRAETALLOW",
+                    PaymentMethodId     = dto.PaymentMethodId!,
+                    Installments        = dto.Installments ?? 1,
+                    IssuerId            = dto.IssuerId,
+                    Description         = description,
+                    ExternalReference   = gc.Id,
+                    Capture             = true,
+                    BinaryMode          = true,
+                    Payer = new PayerRequest
+                    {
+                        Email          = dto.Payer.Email,
+                        FirstName      = payerFirstName,
+                        LastName       = payerLastName,
+                        Identification = payerIdentification
+                    },
+                    AdditionalInfo = additionalInfo
+                }
+            };
+
+            var payment = await _paymentService.CreatePaymentAsync(userId!, null, mpRequest, ct);
+            await _giftCardService.LinkPaymentAsync(gc.Id, payment.Id, ct);
+
+            if (payment.Status == PaymentStatus.APPROVED)
+                await _giftCardService.ActivateAsync(gc.Id, ct);
+
+            return Ok(PaymentResponseDTO.ToDTO(payment));
+        }
+        catch (Exception e) { return StatusCode(400, e.Message); }
+    }
+
     // POST /gift-card/purchase
     [HttpPost("purchase")]
     [AuthAttribute]
