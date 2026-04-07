@@ -7,7 +7,7 @@ public interface IPaymentService
 {
     Task<Payment> CreatePaymentAsync(
         string userId,
-        string orderId,
+        string? orderId,
         MercadoPagoPaymentRequest request,
         CancellationToken cancellationToken = default);
 

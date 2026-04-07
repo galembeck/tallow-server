@@ -22,7 +22,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Payment> Payments { get; set; }
     public DbSet<WishlistItem> WishlistItems { get; set; }
     public DbSet<Coupon> Coupons { get; set; }
-
+    public DbSet<GiftCard> GiftCards { get; set; }
 
     #endregion .: ENTITIES :.
 
