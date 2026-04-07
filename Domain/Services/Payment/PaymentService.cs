@@ -18,13 +18,13 @@ public class PaymentService(
 
     public async Task<Payment> CreatePaymentAsync(
         string userId,
-        string orderId,
+        string? orderId,
         MercadoPagoPaymentRequest request,
         CancellationToken cancellationToken = default)
     {
         var mpResponse = await _mercadoPagoService.CreatePaymentAsync(request, cancellationToken);
 
-        var order = await _orderRepository.GetAsync(orderId, cancellationToken);
+        var order = orderId != null ? await _orderRepository.GetAsync(orderId, cancellationToken) : null;
 
         var payment = new Payment
         {

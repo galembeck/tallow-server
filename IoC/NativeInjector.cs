@@ -96,6 +96,13 @@ public static class NativeInjector
 
         #endregion .: COUPON :.
 
+        #region .: GIFT CARD :.
+
+        services.AddScoped<IGiftCardRepository, GiftCardRepository>();
+        services.AddScoped<IGiftCardService, GiftCardService>();
+
+        #endregion .: GIFT CARD :.
+
         #region .: PAYMENT :.
 
         services.AddScoped<IPaymentRepository, PaymentRepository>();
