@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Public.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("gift-card")]
 public class GiftCardController : _BaseController
 {
     private readonly IGiftCardService _giftCardService;
